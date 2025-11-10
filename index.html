@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="format-detection" content="telephone=yes" />
+  <title>Matrix Abacus</title>
+  <meta name="description" content="Matrix Abacus helps children master numbers through abacus and mental math training. Build focus, speed, and confidence with expert coaches.">
+  <meta name="keywords" content="Matrix Abacus, abacus classes, mental math, kids math, Bengaluru">
+  <meta name="author" content="Matrix Abacus">
+  <meta property="og:title" content="Matrix Abacus – Abacus & Mental Math for Kids">
+  <meta property="og:description" content="Unlock your child's mathematical potential with our proven abacus and mental math training.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://matrixabacus.example.com/">
+  <meta property="og:image" content="/Matrix%20Academy%20Abacus.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Matrix Abacus – Abacus & Mental Math for Kids">
+  <meta name="twitter:description" content="Unlock your child's mathematical potential with our proven training.">
+  <meta name="twitter:image" content="/Matrix%20Academy%20Abacus.png">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <!-- Tailwind CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Google Fonts for a modern look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- AOS (Animate On Scroll) library for subtle animations -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <style>
+    /* Dropdown menus */
+    .dropdown:hover > .dropdown-menu {
+      display: block;
+    }
+    .dropdown-menu {
+      display: none;
+    }
+    /* Custom fonts */
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    /* Glassmorphic navbar backdrop - Platform Independent */
+    .nav-glass {
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      /* Increase opacity to prevent underlying content from bleeding through */
+      background-color: rgba(255, 255, 255, 0.75);
+    }
+    /* Fallback for browsers that don't support backdrop-filter */
+    @supports not (backdrop-filter: blur(12px)) {
+      .nav-glass {
+        background-color: rgba(255, 255, 255, 0.95);
+      }
+    }
+    /* Smooth transition for dropdown menus - Platform Independent */
+    .dropdown-menu {
+      -webkit-transition: opacity 0.2s ease, -webkit-transform 0.2s ease;
+      -moz-transition: opacity 0.2s ease, -moz-transform 0.2s ease;
+      -o-transition: opacity 0.2s ease, -o-transform 0.2s ease;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      -webkit-transform: translateY(10px);
+      -moz-transform: translateY(10px);
+      -ms-transform: translateY(10px);
+      -o-transform: translateY(10px);
+      transform: translateY(10px);
+      opacity: 0;
+    }
+    .dropdown:hover > .dropdown-menu {
+      opacity: 1;
+      -webkit-transform: translateY(0);
+      -moz-transform: translateY(0);
+      -ms-transform: translateY(0);
+      -o-transform: translateY(0);
+      transform: translateY(0);
+    }
+    /* Lightbox button hover states */
+    #lightbox-prev:hover,
+    #lightbox-next:hover,
+    #lightbox-close:hover {
+      color: #60a5fa;
+    }
+
+  
+    nav ul li a,
+    nav .dropdown > button {
+      color: #1e3a8a; /* Tailwind blue‑900 equivalent */
+      -webkit-transition: color 0.2s ease;
+      -moz-transition: color 0.2s ease;
+      -o-transition: color 0.2s ease;
+      transition: color 0.2s ease;
+    }
+    nav ul li a:hover,
+    nav .dropdown > button:hover {
+      color: #2563eb; /* Tailwind blue‑600 equivalent */
+    }
+    /* WhatsApp floating button - Platform Independent */
+    .whatsapp-float {
+      position: fixed !important;
+      width: 60px;
+      height: 60px;
+      bottom: 20px;
+      right: 20px;
+      background-color: #25d366 !important;
+      color: #FFF !important;
+      border-radius: 50px;
+      text-align: center;
+      font-size: 30px;
+      box-shadow: 2px 2px 3px #999;
+      -webkit-box-shadow: 2px 2px 3px #999;
+      -moz-box-shadow: 2px 2px 3px #999;
+      z-index: 99999 !important;
+      display: -webkit-box !important;
+      display: -webkit-flex !important;
+      display: -moz-box !important;
+      display: -ms-flexbox !important;
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      -webkit-transition: all 0.3s ease;
+      -moz-transition: all 0.3s ease;
+      -o-transition: all 0.3s ease;
+      transition: all 0.3s ease;
+      -webkit-box-align: center;
+      -webkit-align-items: center;
+      -moz-box-align: center;
+      -ms-flex-align: center;
+      align-items: center;
+      -webkit-box-pack: center;
+      -webkit-justify-content: center;
+      -moz-box-pack: center;
+      -ms-flex-pack: center;
+      justify-content: center;
+      text-decoration: none;
+      line-height: 60px;
+      cursor: pointer;
+    }
+    .whatsapp-float:hover {
+      background-color: #20ba5a;
+      -webkit-transform: scale(1.1);
+      -moz-transform: scale(1.1);
+      -ms-transform: scale(1.1);
+      -o-transform: scale(1.1);
+      transform: scale(1.1);
+      box-shadow: 3px 3px 5px #666;
+      -webkit-box-shadow: 3px 3px 5px #666;
+      -moz-box-shadow: 3px 3px 5px #666;
+    }
+    .whatsapp-float:active {
+      -webkit-transform: scale(0.95);
+      -moz-transform: scale(0.95);
+      -ms-transform: scale(0.95);
+      -o-transform: scale(0.95);
+      transform: scale(0.95);
+    }
+    .whatsapp-float svg {
+      width: 35px;
+      height: 35px;
+      display: block;
+      margin: 0 auto;
+    }
+    @media (max-width: 768px) {
+      .whatsapp-float {
+        width: 55px;
+        height: 55px;
+        bottom: 15px;
+        right: 15px;
+        font-size: 28px;
+        line-height: 55px;
+      }
+      .whatsapp-float svg {
+        width: 32px;
+        height: 32px;
+      }
+    }
+    /* Fallback for browsers that don't support flexbox */
+    @supports not (display: flex) {
+      .whatsapp-float {
+        display: table-cell;
+        vertical-align: middle;
+        text-align: center;
+        line-height: 60px;
+      }
+      .whatsapp-float svg {
+        display: inline-block;
+      }
+    }
+    /* Location Review Modal */
+    #location-modal {
+      display: none;
+    }
+    #location-modal.show {
+      display: flex;
+    }
+    /* Review Submission Modal */
+    #review-modal {
+      display: none;
+    }
+    #review-modal.show {
+      display: flex;
+    }
+    .review-item {
+      border-left: 4px solid #2563eb;
+      padding-left: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .review-item:last-child {
+      border-bottom: none;
+    }
+    .review-author {
+      font-weight: 600;
+      color: #1e3a8a;
+      margin-bottom: 0.25rem;
+    }
+    .review-rating {
+      color: #fbbf24;
+      margin-bottom: 0.5rem;
+    }
+    .review-text {
+      color: #4b5563;
+      line-height: 1.6;
+    }
+    /* Leaflet Map Styles */
+    #map-container {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .leaflet-container {
+      font-family: 'Poppins', sans-serif;
+    }
+    .custom-marker {
+      background: transparent;
+      border: none;
+    }
+  </style>
+</head>
+<body class="font-sans text-gray-800 bg-blue-50">
+
+  <!-- Navbar -->
+  <nav class="text-gray-800 px-4 py-3 sticky top-0 z-50 shadow-lg nav-glass border-b border-blue-100">
+    <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <img src="Matrix Academy Abacus.png" alt="Matrix Abacus Logo" class="h-10">
+        <span class="text-2xl font-bold">Matrix Abacus</span>
+      </div>
+      <button id="menu-toggle" class="md:hidden inline-flex items-center px-2 py-1 border border-white/30 rounded hover:bg-white/10" aria-label="Toggle navigation">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      </button>
+      <!-- Navigation links -->
+      <ul id="nav-links" class="hidden md:flex flex-wrap space-x-4 mt-4 md:mt-0 w-full md:w-auto">
+      
+      <li><a href="#about" class="hover:underline">About Us</a></li>
+      <!-- Standard Exam Paper dropdown -->
+      <li class="relative dropdown">
+        <button class="hover:underline">Standard Exam Paper</button>
+        <ul id="standard-exam-menu" class="absolute left-0 top-full mt-0 bg-white text-black rounded-md shadow-lg dropdown-menu w-40"></ul>
+      </li>
+      <!-- Level Wise Worksheet dropdown -->
+      <li class="relative dropdown">
+        <button class="hover:underline">Level Wise Worksheet</button>
+        <ul id="level-menu" class="absolute left-0 top-full mt-0 bg-white text-black rounded-md shadow-lg dropdown-menu w-44"></ul>
+      </li>
+      <!-- Results dropdown -->
+      <li class="relative dropdown">
+        <button class="hover:underline">Results</button>
+        <ul id="results-menu" class="absolute left-0 top-full mt-0 bg-white text-black rounded-md shadow-lg dropdown-menu"></ul>
+      </li>
+      <li><a href="#gallery" class="hover:underline">Gallery</a></li>
+      <!-- More dropdown -->
+      </ul>
+    </div>
+  </nav>
+
+  <!--
+    The hero section now uses a soft ocean‑inspired gradient ranging from a
+    pale blue to a light blue.  This helps set the tone for the rest of the
+    page while keeping the overall aesthetic calm and inviting.
+  -->
+  <section id="home" class="relative py-20 bg-gradient-to-br from-blue-50 to-blue-200">
+    <div class="max-w-6xl mx-auto flex flex-col-reverse md:flex-row items-center gap-12 px-6" data-aos="fade-up">
+      <!-- Textual content -->
+      <div class="w-full md:w-1/2 text-center md:text-left">
+        <h1 id="hero-title" class="text-4xl md:text-5xl font-bold mb-4 text-gray-800 leading-tight">Unlock Your Child's Mathematical Potential</h1>
+        <p id="hero-subtitle" class="text-lg mb-8 max-w-md md:max-w-none mx-auto md:mx-0 text-gray-600">Transform your child’s relationship with numbers through our proven abacus and mental math training program</p>
+        <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 justify-center md:justify-start">
+          <!-- Primary CTA now uses a deep blue gradient for a strong call‑to‑action -->
+          <a id="hero-cta-primary" href="#contact" class="inline-block text-white px-8 py-3 rounded-md bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 transition-transform transform hover:scale-105 shadow-lg">Start Free Trial</a>
+          <!-- Secondary CTA retains a light appearance but with a slight blue tint for cohesion -->
+          <a id="hero-cta-secondary" href="#about" class="inline-block bg-white/80 border border-blue-200 text-gray-800 px-8 py-3 rounded-md hover:bg-white shadow-md transition-transform transform hover:scale-105">Learn More</a>
+        </div>
+
+        <!-- Social media icons in hero -->
+        <div class="mt-8 flex items-center justify-center md:justify-start space-x-4">
+          <a href="https://www.facebook.com/matrixabacus/" target="_blank" rel="noopener" aria-label="Facebook"
+             class="p-2 rounded-full bg-white/80 hover:bg-white shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#1877F2" class="w-6 h-6">
+              <path d="M22.675 0H1.325C.594 0 0 .594 0 1.325v21.351C0 23.406.594 24 1.325 24h11.495v-9.294H9.691V11.06h3.129V8.414c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.796.143v3.24h-1.918c-1.504 0-1.795.715-1.795 1.763v2.31h3.587l-.467 3.646h-3.12V24h6.116C23.406 24 24 23.406 24 22.675V1.325C24 .594 23.406 0 22.675 0z"/>
+            </svg>
+          </a>
+          <a href="https://www.youtube.com/@matrixabacus9720" target="_blank" rel="noopener" aria-label="YouTube"
+             class="p-2 rounded-full bg-white/80 hover:bg-white shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6">
+              <path fill="#FF0000" d="M23.499 6.203a3.003 3.003 0 00-2.114-2.127C19.588 3.5 12 3.5 12 3.5s-7.588 0-9.385.576A3.003 3.003 0 00.501 6.203C0 8.01 0 12 0 12s0 3.99.501 5.797a3.003 3.003 0 002.114 2.127C4.412 20.5 12 20.5 12 20.5s7.588 0 9.385-.576a3.003 3.003 0 002.114-2.127C24 15.99 24 12 24 12s0-3.99-.501-5.797z"/>
+              <path fill="#fff" d="M9.75 15.5v-7l6.5 3.5-6.5 3.5z"/>
+            </svg>
+          </a>
+          <a href="https://instagram.com/" target="_blank" rel="noopener" aria-label="Instagram"
+             class="p-2 rounded-full bg-white/80 hover:bg-white shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6">
+              <linearGradient id="igHero" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f58529"/>
+                <stop offset="30%" stop-color="#dd2a7b"/>
+                <stop offset="60%" stop-color="#8134af"/>
+                <stop offset="100%" stop-color="#515bd4"/>
+              </linearGradient>
+              <path fill="url(#igHero)" d="M12 2.163c3.204 0 3.584.012 4.85.07 1.206.056 1.98.246 2.438.41a4.92 4.92 0 011.775 1.153 4.92 4.92 0 011.153 1.775c.164.458.354 1.232.41 2.438.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.056 1.206-.246 1.98-.41 2.438a4.92 4.92 0 01-1.153 1.775 4.92 4.92 0 01-1.775 1.153c-.458.164-1.232.354-2.438.41-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.206-.056-1.98-.246-2.438-.41a4.92 4.92 0 01-1.775-1.153 4.92 4.92 0 01-1.153-1.775c-.164-.458-.354-1.232-.41-2.438C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.056-1.206.246-1.98.41-2.438A4.92 4.92 0 013.796 2.937 4.92 4.92 0 015.571 1.784c.458-.163 1.232-.353 2.438-.41C9.274 1.316 9.654 1.304 12.858 1.304L12 1.304z"/>
+              <circle cx="18.406" cy="5.594" r="1.44" fill="#fff"/>
+              <path fill="#fff" d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zm0 10.162a4 4 0 110-8 4 4 0 010 8z"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+      <!-- Decorative image -->
+      <div class="w-full md:w-1/2">
+        <img id="hero-image" src="images/gallery1.png" alt="Child playing with abacus" class="rounded-xl shadow-2xl w-full h-64 md:h-96 object-cover" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured on Discovery Section (click-to-load) -->
+  <section id="featured" class="py-16 px-6 text-center bg-blue-50" data-aos="fade-up">
+    <h2 class="text-3xl font-bold mb-6">Featured on Discovery</h2>
+    <div class="max-w-4xl mx-auto">
+      <div id="featured-video" class="relative w-full h-64 md:h-96 rounded-lg overflow-hidden shadow-md cursor-pointer bg-black">
+        <img id="featured-thumb" src="https://img.youtube.com/vi/sUjXo2W6o0c/hqdefault.jpg" alt="Play video" class="w-full h-full object-cover opacity-90">
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#e11d48" class="w-10 h-10"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Section -->
+  <section id="why" class="py-20 px-6 text-center bg-white" data-aos="fade-up">
+    <h2 class="text-3xl md:text-4xl font-bold mb-8 text-gray-800">Why Matrix Abacus?</h2>
+    <p class="max-w-3xl mx-auto text-lg leading-relaxed text-gray-600 mb-12">
+      Matrix Abacus is a comprehensive skill development program designed to enhance various aspects of your child’s growth. It provides the foundation to excel in mathematics while nurturing essential life skills like focus, concentration and mental agility.
+    </p>
+    <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div class="flex flex-col items-center p-6 bg-gray-50 rounded-lg shadow-md hover:-translate-y-1 hover:shadow-xl transition">
+        <div class="bg-blue-100 text-blue-600 rounded-full p-4 mb-4">
+          <!-- Brain Icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h1m-1 4v2a1 1 0 11-2 0v-2h-1a3 3 0 110-6h1m0-2a3 3 0 013-3 3 3 0 013 3h1a3 3 0 110 6h-1v2a1 1 0 11-2 0v-2h-1" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold mb-2 text-gray-800">Sharp Mind</h3>
+        <p class="text-gray-600 text-sm">Boost mental agility and problem‑solving skills with our structured abacus training.</p>
+      </div>
+      <div class="flex flex-col items-center p-6 bg-gray-50 rounded-lg shadow-md hover:-translate-y-1 hover:shadow-xl transition">
+        <!-- Use green tones to echo ocean colours instead of pink -->
+        <div class="bg-green-100 text-green-600 rounded-full p-4 mb-4">
+          <!-- Speed Icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12l9-2.5M12 12l8 4m-8-4L4 4m0 12c3.866 0 7-3.134 7-7 0-.5-.042-.993-.123-1.472" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold mb-2 text-gray-800">Speed &amp; Accuracy</h3>
+        <p class="text-gray-600 text-sm">Develop lightning‑fast calculation skills while maintaining impeccable accuracy.</p>
+      </div>
+      <div class="flex flex-col items-center p-6 bg-gray-50 rounded-lg shadow-md hover:-translate-y-1 hover:shadow-xl transition">
+        <div class="bg-blue-100 text-blue-600 rounded-full p-4 mb-4">
+          <!-- Focus Icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12a9 9 0 119 9 9 9 0 01-9-9zm12 0a3 3 0 11-3-3 3 3 0 013 3z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold mb-2 text-gray-800">Unwavering Focus</h3>
+        <p class="text-gray-600 text-sm">Improve concentration and attention span through engaging mental exercises.</p>
+      </div>
+      <div class="flex flex-col items-center p-6 bg-gray-50 rounded-lg shadow-md hover:-translate-y-1 hover:shadow-xl transition">
+        <div class="bg-indigo-100 text-indigo-600 rounded-full p-4 mb-4">
+          <!-- Confidence Icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold mb-2 text-gray-800">Confidence &amp; Joy</h3>
+        <p class="text-gray-600 text-sm">Build self‑confidence and a love for numbers that lasts a lifetime.</p>
+      </div>
+    </div>
+  </section>
+
+  
+
+ 
+
+  <!-- About Section -->
+  <section id="about" class="py-20 px-6 bg-gray-50 text-center" data-aos="fade-up">
+    <h2 class="text-3xl md:text-4xl font-bold mb-4">About Us</h2>
+    <p class="max-w-3xl mx-auto text-lg leading-relaxed mb-10 text-gray-700">
+      Matrix Abacus has vast experience in developing skills among children across India and beyond. Our mission is to nurture young minds through a structured curriculum and dedicated trainers.
+    </p>
+    <div id="about-stats" class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto"></div>
+    <div class="max-w-6xl mx-auto mt-12">
+      <h3 class="text-2xl font-bold mb-4">Find Matrix Abacus Centers in Bangalore</h3>
+      <p class="text-gray-600 mb-4">Click on any location marker to see reviews and details</p>
+      <div class="w-full h-96 rounded-lg overflow-hidden shadow-md">
+        <div id="map-container" class="w-full h-full"></div>
+      </div>
+    </div>
+  </section>
+
+ 
+
+  <!-- Franchise Section -->
+  <!-- Gallery Section -->
+  <section id="gallery" class="py-16 px-6 bg-blue-50 text-center" data-aos="fade-up">
+    <h2 class="text-3xl font-bold mb-8">Gallery</h2>
+    <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl mx-auto"></div>
+    <div class="mt-8 flex items-center justify-center gap-3">
+      <button id="gallery-load-more" class="px-6 py-3 bg-white border rounded-md hover:bg-gray-100">Load more</button>
+      <button id="gallery-show-all" class="px-6 py-3 bg-white border rounded-md hover:bg-gray-100">Show all</button>
+    </div>
+  </section>
+
+  <!-- Lightbox Modal -->
+  <div id="lightbox" class="fixed inset-0 bg-black bg-opacity-90 hidden items-center justify-center z-50">
+    <button id="lightbox-close" aria-label="Close" class="absolute top-4 right-4 text-white text-3xl">×</button>
+    <button id="lightbox-prev" aria-label="Previous" class="absolute left-4 md:left-8 text-white text-3xl">‹</button>
+    <img id="lightbox-image" src="" alt="Gallery item" class="max-h-[85vh] max-w-[90vw] rounded shadow-lg">
+    <button id="lightbox-next" aria-label="Next" class="absolute right-4 md:right-8 text-white text-3xl">›</button>
+  </div>
+
+  <!-- Location Review Modal -->
+  <div id="location-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+        <h3 id="modal-location-name" class="text-2xl font-bold text-gray-800"></h3>
+        <button id="modal-close" aria-label="Close" class="text-gray-500 hover:text-gray-700 text-3xl leading-none">&times;</button>
+      </div>
+      <div class="p-6">
+        <div id="modal-location-address" class="text-gray-600 mb-4"></div>
+        <div id="modal-location-phone" class="text-gray-600 mb-6"></div>
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="text-xl font-semibold text-gray-800">Reviews</h4>
+          <button id="write-review-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
+            Write a Review
+          </button>
+        </div>
+        <div id="modal-reviews" class="space-y-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review Submission Modal -->
+  <div id="review-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+        <h3 class="text-2xl font-bold text-gray-800">Write a Review</h3>
+        <button id="review-modal-close" aria-label="Close" class="text-gray-500 hover:text-gray-700 text-3xl leading-none">&times;</button>
+      </div>
+      <form id="review-form" class="p-6">
+        <input type="hidden" id="review-location-name" name="location_name">
+        <input type="hidden" id="review-location-address" name="location_address">
+        
+        <div class="mb-4">
+          <label for="reviewer-name" class="block text-sm font-medium text-gray-700 mb-2">Your Name *</label>
+          <input type="text" id="reviewer-name" name="reviewer_name" required 
+                 class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                 placeholder="Enter your name">
+        </div>
+
+        <div class="mb-4">
+          <label for="reviewer-email" class="block text-sm font-medium text-gray-700 mb-2">Your Email *</label>
+          <input type="email" id="reviewer-email" name="reviewer_email" required 
+                 class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                 placeholder="Enter your email">
+        </div>
+
+        <div class="mb-4">
+          <label for="review-rating" class="block text-sm font-medium text-gray-700 mb-2">Rating *</label>
+          <div class="flex items-center space-x-2">
+            <select id="review-rating" name="rating" required 
+                    class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Select rating</option>
+              <option value="5">5 - Excellent</option>
+              <option value="4">4 - Very Good</option>
+              <option value="3">3 - Good</option>
+              <option value="2">2 - Fair</option>
+              <option value="1">1 - Poor</option>
+            </select>
+            <div id="rating-stars" class="text-2xl text-gray-300"></div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="review-text" class="block text-sm font-medium text-gray-700 mb-2">Your Review *</label>
+          <textarea id="review-text" name="review_text" required rows="4" 
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Share your experience..."></textarea>
+        </div>
+
+        <div id="review-status" class="mb-4 text-sm" aria-live="polite"></div>
+
+        <div class="flex space-x-3">
+          <button type="submit" 
+                  class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium">
+            Submit Review
+          </button>
+          <button type="button" id="review-cancel-btn" 
+                  class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Franchise Section -->
+  <section id="franchise" class="py-16 px-6 bg-gray-50 text-center" data-aos="fade-up">
+    <h2 class="text-3xl font-bold mb-6">Become a Franchise</h2>
+    <p class="max-w-3xl mx-auto text-lg leading-relaxed mb-6">
+      Join us in our mission to empower children while building a profitable and sustainable business. Matrix Abacus offers comprehensive support and training to our franchisees.
+    </p>
+    <!--
+      Update the franchise button: clicking it will open an external Google Form in a
+      new tab. Replace the example URL below with your actual Google Form link.
+    -->
+    <a href="https://forms.gle/your-google-form-id" target="_blank" rel="noopener" class="inline-block px-6 py-3 rounded-md text-white bg-gradient-to-r from-blue-600 to-green-500 hover:from-blue-700 hover:to-green-600 transition-transform transform hover:scale-105">Apply for a Franchise</a>
+  </section>
+
+
+  <!-- FAQ Section -->
+  <section id="faq" class="py-16 px-6 bg-white text-center" data-aos="fade-up">
+    <h2 class="text-3xl font-bold mb-8">Frequently Asked Questions</h2>
+    <div id="faq-list" class="max-w-4xl mx-auto text-left space-y-4"></div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="py-16 px-6 bg-gray-50 text-center" data-aos="fade-up">
+    <h2 class="text-3xl font-bold mb-6">Contact Us for More Information</h2>
+    <!--
+      Contact form
+      ----------
+      The form container previously used a translucent white background (bg-white/80) which
+      caused poor contrast between the text and the background on some devices.  In
+      addition, the `sky` colour classes do not exist in the version of Tailwind
+      included on this page (v2.2), so the submit button ended up inheriting
+      default styles and became invisible.  To ensure the call‑to‑action stands
+      out, we switch to a solid white background with rounded corners and an
+      elevated shadow.  The submit button now uses the supported `blue` colour
+      palette to guarantee visibility across browsers.
+    -->
+    <form id="contact-form" action="https://formsubmit.co/info@matrixabacus.com" method="POST" class="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white shadow-xl rounded-xl p-6">
+      <input type="hidden" name="_subject" value="New inquiry from Matrix Abacus website">
+      <input type="hidden" name="_template" value="table">
+      <input type="hidden" name="_captcha" value="false">
+      <input type="hidden" name="_next" value="index.html#thanks">
+
+      <label class="sr-only" for="parent_name">Parent Name</label>
+      <input id="parent_name" type="text" name="parent_name" placeholder="Parent Name" class="border p-3 rounded-md" required autocomplete="name">
+
+      <label class="sr-only" for="email">Email</label>
+      <input id="email" type="email" name="email" placeholder="Email" class="border p-3 rounded-md" required autocomplete="email">
+
+      <label class="sr-only" for="mobile">Mobile Number</label>
+      <input id="mobile" type="tel" name="mobile" placeholder="Mobile No." class="border p-3 rounded-md" required autocomplete="tel" pattern="[0-9+\-\s]{7,15}">
+
+      <label class="sr-only" for="child_name">Child Name</label>
+      <input id="child_name" type="text" name="child_name" placeholder="Child Name" class="border p-3 rounded-md" autocomplete="given-name">
+
+      <label class="sr-only" for="child_class">Child Class</label>
+      <input id="child_class" type="text" name="child_class" placeholder="Child Class" class="border p-3 rounded-md" autocomplete="off">
+
+      <div class="sm:col-span-2">
+        <!--
+          Use the Tailwind blue palette instead of sky/cyan which are unavailable
+          in v2.2.  The button has a prominent blue colour with a darker hover
+          state to draw attention without overwhelming the form.
+        -->
+        <button id="contact-submit" type="submit" class="w-full px-6 py-3 rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-transform transform hover:scale-105">Submit</button>
+      </div>
+
+      <div id="contact-status" class="sm:col-span-2 text-sm mt-1 text-left" aria-live="polite"></div>
+    </form>
+    <div id="thanks" class="max-w-3xl mx-auto mt-6 text-green-700 font-semibold hidden">
+      Thank you! Your details have been submitted. We'll contact you shortly.
+    </div>
+    
+  </section>
+
+  <!-- Social Follow Strip -->
+  <section id="social" class="py-10 px-6 bg-white" data-aos="fade-up">
+    <div class="max-w-6xl mx-auto text-center">
+      <h2 class="text-2xl font-bold mb-4">Follow Us</h2>
+      <div class="flex items-center justify-center space-x-6">
+        <a id="facebook-link" href="https://www.facebook.com/matrixabacus/" target="_blank" rel="noopener" aria-label="Facebook" class="p-3 rounded-full bg-white shadow hover:shadow-md transition">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#1877F2" class="w-7 h-7"><path d="M22.675 0H1.325C.594 0 0 .594 0 1.325v21.351C0 23.406.594 24 1.325 24h11.495v-9.294H9.691V11.06h3.129V8.414c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.796.143v3.24h-1.918c-1.504 0-1.795.715-1.795 1.763v2.31h3.587l-.467 3.646h-3.12V24h6.116C23.406 24 24 23.406 24 22.675V1.325C24 .594 23.406 0 22.675 0z"/></svg>
+        </a>
+        <a id="youtube-link" href="https://www.youtube.com/@matrixabacus9720" target="_blank" rel="noopener" aria-label="YouTube" class="p-3 rounded-full bg-white shadow hover:shadow-md transition">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7"><path fill="#FF0000" d="M23.499 6.203a3.003 3.003 0 00-2.114-2.127C19.588 3.5 12 3.5 12 3.5s-7.588 0-9.385.576A3.003 3.003 0 00.501 6.203C0 8.01 0 12 0 12s0 3.99.501 5.797a3.003 3.003 0 002.114 2.127C4.412 20.5 12 20.5 12 20.5s7.588 0 9.385-.576a3.003 3.003 0 002.114-2.127C24 15.99 24 12 24 12s0-3.99-.501-5.797z"/><path fill="#fff" d="M9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
+        </a>
+        <a id="instagram-link" href="https://instagram.com/" target="_blank" rel="noopener" aria-label="Instagram" class="p-3 rounded-full bg-white shadow hover:shadow-md transition">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7"><linearGradient id="ig" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f58529"/><stop offset="30%" stop-color="#dd2a7b"/><stop offset="60%" stop-color="#8134af"/><stop offset="100%" stop-color="#515bd4"/></linearGradient><path fill="url(#ig)" d="M12 2.163c3.204 0 3.584.012 4.85.07 1.206.056 1.98.246 2.438.41a4.92 4.92 0 011.775 1.153 4.92 4.92 0 011.153 1.775c.164.458.354 1.232.41 2.438.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.056 1.206-.246 1.98-.41 2.438a4.92 4.92 0 01-1.153 1.775 4.92 4.92 0 01-1.775 1.153c-.458.164-1.232.354-2.438.41-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.206-.056-1.98-.246-2.438-.41a4.92 4.92 0 01-1.775-1.153 4.92 4.92 0 01-1.153-1.775c-.164-.458-.354-1.232-.41-2.438C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.056-1.206.246-1.98.41-2.438A4.92 4.92 0 013.796 2.937 4.92 4.92 0 015.571 1.784c.458-.163 1.232-.353 2.438-.41C9.274 1.316 9.654 1.304 12.858 1.304L12 1.304z"/><circle cx="18.406" cy="5.594" r="1.44" fill="#fff"/><path fill="#fff" d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zm0 10.162a4 4 0 110-8 4 4 0 010 8z"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-white text-center py-8 bg-gradient-to-r from-blue-700 to-green-600">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div>
+        <img src="Matrix Academy Abacus.png" alt="Matrix Abacus Logo" class="h-12 mx-auto mb-4">
+        <p class="font-bold">Matrix Abacus</p>
+        <p><a id="footer-address-link" class="underline" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=6th%20Main%2C%20Dwaraka%20Nagar%2C%2014%2C%20Vidya%20Deep%2C%20next%20to%20SBI%20Bank%2C%20Vijaynagar%2C%20Yelahanka%2C%20Bengaluru%2C%20Karnataka%20560064">6th Main, Dwaraka Nagar, 14, Vidya Deep, next to SBI Bank, Vijaynagar, Yelahanka, Bengaluru, Karnataka 560064</a></p>
+        <p>Email: <a id="footer-email-link" href="mailto:info@matrixabacus.com" class="underline">info@matrixabacus.com</a></p>
+        <p>Phone: <a id="footer-phone-link" href="tel:+919980998588" class="underline">+91&nbsp;99809&nbsp;98588</a></p>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold mb-2">Quick Links</h3>
+        <ul class="space-y-1">
+          <li><a href="#home" class="hover:underline">Home</a></li>
+          <li><a href="#featured" class="hover:underline">Featured</a></li>
+          <li><a href="#why" class="hover:underline">Why Matrix Abacus?</a></li>
+          <li><a href="#about" class="hover:underline">About Us</a></li>
+          <li><a href="#gallery" class="hover:underline">Gallery</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold mb-2">Resources</h3>
+        <ul class="space-y-1">
+          <li><a href="#franchise" class="hover:underline">Become a Franchise</a></li>
+          <li><a href="#faq" class="hover:underline">FAQ</a></li>
+          <li><a href="#contact" class="hover:underline">Contact Us</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-8">
+      <p>© <span id="current-year">2025</span> Matrix Abacus. All rights reserved.</p>
+      <p class="mt-2 text-sm text-blue-100">Developed by Shriprasad Patil and Shubham kumar</p>
+    </div>
+  </footer>
+  <script>
+    // Content data (edit these arrays to update the site)
+    // Make DATA globally accessible for map initialization
+    window.DATA = {
+      featuredVideoId: 'sUjXo2W6o0c',
+      standardExams: [
+        { label: 'Class 1', href: 'pdfs/class1-exam.pdf' },
+        { label: 'Class 2', href: 'pdfs/class2-exam.pdf' },
+        { label: 'Class 3', href: 'pdfs/class3-exam.pdf' },
+        { label: 'Class 4', href: 'pdfs/class4-exam.pdf' },
+        { label: 'Class 5', href: 'pdfs/class5-exam.pdf' },
+        { label: 'Class 6', href: 'pdfs/class6-exam.pdf' },
+        { label: 'Class 7', href: 'pdfs/class7-exam.pdf' },
+        { label: 'Class 8', href: 'pdfs/class8-exam.pdf' }
+      ],
+      levelWorksheets: [
+        { label: 'Prodigy', href: 'pdfs/prodigy.pdf' },
+        { label: 'Level 1', href: 'pdfs/level1.pdf' },
+        { label: 'Level 2', href: 'pdfs/level2.pdf' },
+        { label: 'Level 3', href: 'pdfs/level3.pdf' },
+        { label: 'Level 4', href: 'pdfs/level4.pdf' },
+        { label: 'Level 5', href: 'pdfs/level5.pdf' },
+        { label: 'Level 6', href: 'pdfs/level6.pdf' },
+        { label: 'Level 7', href: 'pdfs/level7.pdf' },
+        { label: 'Level 8', href: 'pdfs/level8.pdf' },
+        { label: 'Level 9', href: 'pdfs/level9.pdf' },
+        { label: 'Level 10', href: 'pdfs/level10.pdf' }
+      ],
+      results: [
+        { label: 'Student Results', href: 'pdfs/student-results.pdf' }
+      ],
+      // Gallery images
+      galleryImages: [
+        'images/gallery1.png',
+        'images/gallery2.png',
+        'images/gallery3.png',
+        'images/gallery4.png',
+        'images/gallery5.png',
+        'images/gallery6.png'
+      ],
+      faqs: [
+        { q: 'What age group can enroll in Matrix Abacus?', a: 'Our program is designed for children between 6 and 12 years of age.' },
+        { q: 'Do you offer online classes?', a: 'Yes, we offer both online and offline classes to suit your convenience.' },
+        { q: 'How long does it take to complete a module?', a: 'Each module typically takes a few months to complete, depending on the child’s pace and proficiency.' },
+        { q: "Can parents track their child's progress?", a: 'Yes, we provide regular assessments and feedback to keep parents informed about their child’s progress.' }
+      ],
+      hero: {
+        title: "Unlock Your Child's Mathematical Potential",
+        subtitle: "Transform your child’s relationship with numbers through our proven abacus and mental math training program",
+        primaryCta: { label: "Start Free Trial", href: "#contact" },
+        secondaryCta: { label: "Learn More", href: "#about" },
+        image: { href: 'images/gallery1.png' }
+      },
+      aboutStats: [
+        { heading: "30+ Centres", text: "Spread across multiple cities to serve your child better." },
+        { heading: "1,000+ Students", text: "Join thousands of children who have benefited from our program." }
+      ],
+      bangaloreLocations: [
+        {
+          name: "Matrix Abacus - Yelahanka",
+          address: "6th Main, Dwaraka Nagar, 14, Vidya Deep, next to SBI Bank, Vijaynagar, Yelahanka, Bengaluru, Karnataka 560064",
+          phone: "+91 99809 98588",
+          lat: 13.1000,
+          lng: 77.5964,
+          reviews: [
+            { author: "Priya Sharma", rating: 5, text: "Excellent teaching methodology! My daughter has improved significantly in mental math. The trainers are very patient and encouraging." },
+            { author: "Rajesh Kumar", rating: 5, text: "Best abacus classes in Yelahanka. My son loves attending classes here. Highly recommended!" },
+            { author: "Anita Reddy", rating: 4, text: "Good infrastructure and well-trained teachers. My child's concentration has improved a lot." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Whitefield",
+          address: "Whitefield Main Road, Near ITPL, Bengaluru, Karnataka 560066",
+          phone: "+91 99809 98588",
+          lat: 12.9698,
+          lng: 77.7499,
+          reviews: [
+            { author: "Suresh Nair", rating: 5, text: "Amazing results! My daughter can now do complex calculations mentally. The teachers are very dedicated." },
+            { author: "Meera Patel", rating: 5, text: "Great learning environment. My son's confidence in mathematics has increased tremendously." },
+            { author: "Vikram Singh", rating: 4, text: "Professional staff and good facilities. Worth the investment for your child's future." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Koramangala",
+          address: "Koramangala 5th Block, Near Forum Mall, Bengaluru, Karnataka 560095",
+          phone: "+91 99809 98588",
+          lat: 12.9352,
+          lng: 77.6245,
+          reviews: [
+            { author: "Deepa Menon", rating: 5, text: "Fantastic program! My child's problem-solving skills have improved significantly. Highly satisfied!" },
+            { author: "Arjun Rao", rating: 5, text: "Best decision we made for our child's education. The abacus training is excellent." },
+            { author: "Kavitha Iyer", rating: 4, text: "Good curriculum and experienced trainers. My daughter enjoys learning here." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Indiranagar",
+          address: "Indiranagar 100 Feet Road, Near Metro Station, Bengaluru, Karnataka 560038",
+          phone: "+91 99809 98588",
+          lat: 12.9784,
+          lng: 77.6408,
+          reviews: [
+            { author: "Ramesh Gupta", rating: 5, text: "Outstanding teaching quality! My son's calculation speed has improved dramatically. Great value for money." },
+            { author: "Sunita Desai", rating: 5, text: "Excellent center with well-structured courses. My child looks forward to every class." },
+            { author: "Mohan Das", rating: 4, text: "Good location and friendly staff. The abacus method really works for mental math." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Jayanagar",
+          address: "Jayanagar 4th Block, Near BDA Complex, Bengaluru, Karnataka 560011",
+          phone: "+91 99809 98588",
+          lat: 12.9279,
+          lng: 77.5933,
+          reviews: [
+            { author: "Lakshmi Nair", rating: 5, text: "Wonderful experience! My daughter's math skills have improved tremendously. Highly recommend!" },
+            { author: "Krishna Murthy", rating: 5, text: "Best abacus classes in Jayanagar. Excellent teachers and great learning environment." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Malleswaram",
+          address: "Malleswaram 8th Cross, Near Sampige Road, Bengaluru, Karnataka 560003",
+          phone: "+91 99809 98588",
+          lat: 13.0046,
+          lng: 77.5698,
+          reviews: [
+            { author: "Geetha Rao", rating: 5, text: "Excellent training center. My son loves the classes and his mental math skills are amazing now." },
+            { author: "Venkatesh Iyer", rating: 4, text: "Good infrastructure and experienced faculty. Very satisfied with the progress." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Rajajinagar",
+          address: "Rajajinagar 1st Block, Near Metro Station, Bengaluru, Karnataka 560010",
+          phone: "+91 99809 98588",
+          lat: 12.9914,
+          lng: 77.5514,
+          reviews: [
+            { author: "Shobha Reddy", rating: 5, text: "Amazing results! My child can now solve complex calculations mentally. Great program!" },
+            { author: "Prakash Kumar", rating: 5, text: "Highly professional staff. The abacus training has boosted my daughter's confidence." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Basavanagudi",
+          address: "Basavanagudi, Near Bull Temple, Bengaluru, Karnataka 560004",
+          phone: "+91 99809 98588",
+          lat: 12.9423,
+          lng: 77.5677,
+          reviews: [
+            { author: "Radha Menon", rating: 5, text: "Fantastic teaching methodology! My son's concentration and calculation speed have improved significantly." },
+            { author: "Srinivas Murthy", rating: 4, text: "Good center with dedicated teachers. Worth every penny!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - BTM Layout",
+          address: "BTM Layout 2nd Stage, Near Udupi Garden, Bengaluru, Karnataka 560076",
+          phone: "+91 99809 98588",
+          lat: 12.9166,
+          lng: 77.6101,
+          reviews: [
+            { author: "Anjali Desai", rating: 5, text: "Excellent center! My daughter's problem-solving skills have improved dramatically. Highly satisfied!" },
+            { author: "Ravi Shankar", rating: 5, text: "Best decision for my child's education. The abacus training is outstanding." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Marathahalli",
+          address: "Marathahalli Bridge, Outer Ring Road, Bengaluru, Karnataka 560037",
+          phone: "+91 99809 98588",
+          lat: 12.9581,
+          lng: 77.7010,
+          reviews: [
+            { author: "Meera Nair", rating: 5, text: "Great learning environment. My son's confidence in mathematics has increased tremendously." },
+            { author: "Suresh Kumar", rating: 4, text: "Professional staff and good facilities. My child enjoys learning here." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Electronic City",
+          address: "Electronic City Phase 1, Near Infosys, Bengaluru, Karnataka 560100",
+          phone: "+91 99809 98588",
+          lat: 12.8456,
+          lng: 77.6633,
+          reviews: [
+            { author: "Priya Iyer", rating: 5, text: "Outstanding teaching quality! My daughter's calculation speed has improved dramatically." },
+            { author: "Rajesh Nair", rating: 5, text: "Excellent center with well-structured courses. Highly recommended!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - HSR Layout",
+          address: "HSR Layout Sector 7, Near BDA Complex, Bengaluru, Karnataka 560102",
+          phone: "+91 99809 98588",
+          lat: 12.9141,
+          lng: 77.6417,
+          reviews: [
+            { author: "Deepa Rao", rating: 5, text: "Amazing results! My child can now do complex calculations mentally. Great value for money." },
+            { author: "Vikram Menon", rating: 4, text: "Good location and friendly staff. The abacus method really works!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Banashankari",
+          address: "Banashankari 2nd Stage, Near Bus Stand, Bengaluru, Karnataka 560070",
+          phone: "+91 99809 98588",
+          lat: 12.9254,
+          lng: 77.5468,
+          reviews: [
+            { author: "Kavitha Reddy", rating: 5, text: "Excellent training center. My son loves the classes and his mental math skills are amazing." },
+            { author: "Mohan Das", rating: 5, text: "Best abacus classes in Banashankari. Highly professional staff." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Vijayanagar",
+          address: "Vijayanagar Main Road, Near Metro Station, Bengaluru, Karnataka 560040",
+          phone: "+91 99809 98588",
+          lat: 12.9762,
+          lng: 77.5313,
+          reviews: [
+            { author: "Sunita Patel", rating: 5, text: "Wonderful experience! My daughter's math skills have improved tremendously." },
+            { author: "Arjun Singh", rating: 4, text: "Good infrastructure and experienced faculty. Very satisfied!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Hebbal",
+          address: "Hebbal Main Road, Near Manyata Tech Park, Bengaluru, Karnataka 560024",
+          phone: "+91 99809 98588",
+          lat: 13.0358,
+          lng: 77.5970,
+          reviews: [
+            { author: "Latha Menon", rating: 5, text: "Fantastic program! My child's problem-solving skills have improved significantly." },
+            { author: "Ramesh Iyer", rating: 5, text: "Excellent center with well-structured courses. My child looks forward to every class." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Yeshwanthpur",
+          address: "Yeshwanthpur Industrial Area, Near Metro Station, Bengaluru, Karnataka 560022",
+          phone: "+91 99809 98588",
+          lat: 13.0252,
+          lng: 77.5393,
+          reviews: [
+            { author: "Geetha Nair", rating: 5, text: "Amazing results! My daughter can now solve complex calculations mentally." },
+            { author: "Venkatesh Rao", rating: 4, text: "Good center with dedicated teachers. Worth every penny!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - RT Nagar",
+          address: "RT Nagar Main Road, Near Post Office, Bengaluru, Karnataka 560032",
+          phone: "+91 99809 98588",
+          lat: 13.0208,
+          lng: 77.5989,
+          reviews: [
+            { author: "Shobha Iyer", rating: 5, text: "Excellent teaching methodology! My son's concentration has improved a lot." },
+            { author: "Prakash Reddy", rating: 5, text: "Best decision for my child's education. Highly recommended!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Sahakarnagar",
+          address: "Sahakarnagar Main Road, Near BDA Complex, Bengaluru, Karnataka 560092",
+          phone: "+91 99809 98588",
+          lat: 12.9789,
+          lng: 77.5801,
+          reviews: [
+            { author: "Radha Kumar", rating: 5, text: "Great learning environment. My son's confidence has increased tremendously." },
+            { author: "Srinivas Menon", rating: 4, text: "Professional staff and good facilities. Very satisfied!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - JP Nagar",
+          address: "JP Nagar 7th Phase, Near Metro Station, Bengaluru, Karnataka 560078",
+          phone: "+91 99809 98588",
+          lat: 12.8904,
+          lng: 77.5850,
+          reviews: [
+            { author: "Anjali Rao", rating: 5, text: "Outstanding teaching quality! My daughter's calculation speed has improved dramatically." },
+            { author: "Ravi Nair", rating: 5, text: "Excellent center with well-structured courses. Highly satisfied!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Bannerghatta",
+          address: "Bannerghatta Main Road, Near Zoo, Bengaluru, Karnataka 560083",
+          phone: "+91 99809 98588",
+          lat: 12.8000,
+          lng: 77.5767,
+          reviews: [
+            { author: "Meera Iyer", rating: 5, text: "Fantastic program! My child's problem-solving skills have improved significantly." },
+            { author: "Suresh Reddy", rating: 4, text: "Good location and friendly staff. The abacus method really works!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Kengeri",
+          address: "Kengeri Main Road, Near Satellite Bus Stand, Bengaluru, Karnataka 560060",
+          phone: "+91 99809 98588",
+          lat: 12.9067,
+          lng: 77.4850,
+          reviews: [
+            { author: "Priya Menon", rating: 5, text: "Excellent training center. My son loves the classes and his mental math skills are amazing." },
+            { author: "Rajesh Rao", rating: 5, text: "Best abacus classes in Kengeri. Highly professional staff." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Peenya",
+          address: "Peenya Industrial Area, Near Metro Station, Bengaluru, Karnataka 560058",
+          phone: "+91 99809 98588",
+          lat: 13.0236,
+          lng: 77.5128,
+          reviews: [
+            { author: "Deepa Kumar", rating: 5, text: "Wonderful experience! My daughter's math skills have improved tremendously." },
+            { author: "Vikram Iyer", rating: 4, text: "Good infrastructure and experienced faculty. Very satisfied!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Domlur",
+          address: "Domlur Layout, Near Indiranagar, Bengaluru, Karnataka 560071",
+          phone: "+91 99809 98588",
+          lat: 12.9533,
+          lng: 77.6389,
+          reviews: [
+            { author: "Kavitha Menon", rating: 5, text: "Amazing results! My child can now do complex calculations mentally." },
+            { author: "Mohan Nair", rating: 5, text: "Excellent center with well-structured courses. My child looks forward to every class." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Ulsoor",
+          address: "Ulsoor Main Road, Near Metro Station, Bengaluru, Karnataka 560008",
+          phone: "+91 99809 98588",
+          lat: 12.9767,
+          lng: 77.6211,
+          reviews: [
+            { author: "Sunita Rao", rating: 5, text: "Fantastic teaching methodology! My son's concentration has improved a lot." },
+            { author: "Arjun Iyer", rating: 4, text: "Best decision for my child's education. Highly recommended!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Frazer Town",
+          address: "Frazer Town, Near Mosque Road, Bengaluru, Karnataka 560005",
+          phone: "+91 99809 98588",
+          lat: 12.9917,
+          lng: 77.6200,
+          reviews: [
+            { author: "Latha Reddy", rating: 5, text: "Great learning environment. My son's confidence has increased tremendously." },
+            { author: "Ramesh Menon", rating: 5, text: "Professional staff and good facilities. Very satisfied!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Shivajinagar",
+          address: "Shivajinagar Main Road, Near Bus Stand, Bengaluru, Karnataka 560051",
+          phone: "+91 99809 98588",
+          lat: 12.9789,
+          lng: 77.6083,
+          reviews: [
+            { author: "Geetha Kumar", rating: 5, text: "Outstanding teaching quality! My daughter's calculation speed has improved dramatically." },
+            { author: "Venkatesh Iyer", rating: 4, text: "Excellent center with well-structured courses. Highly satisfied!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Richmond Town",
+          address: "Richmond Town, Near St. Joseph's College, Bengaluru, Karnataka 560025",
+          phone: "+91 99809 98588",
+          lat: 12.9667,
+          lng: 77.6083,
+          reviews: [
+            { author: "Shobha Rao", rating: 5, text: "Fantastic program! My child's problem-solving skills have improved significantly." },
+            { author: "Prakash Menon", rating: 5, text: "Good location and friendly staff. The abacus method really works!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Cox Town",
+          address: "Cox Town Main Road, Near Mosque, Bengaluru, Karnataka 560005",
+          phone: "+91 99809 98588",
+          lat: 12.9950,
+          lng: 77.6250,
+          reviews: [
+            { author: "Radha Nair", rating: 5, text: "Excellent training center. My son loves the classes and his mental math skills are amazing." },
+            { author: "Srinivas Iyer", rating: 4, text: "Best abacus classes in Cox Town. Highly professional staff." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Benson Town",
+          address: "Benson Town, Near St. John's Hospital, Bengaluru, Karnataka 560046",
+          phone: "+91 99809 98588",
+          lat: 12.9900,
+          lng: 77.6100,
+          reviews: [
+            { author: "Anjali Menon", rating: 5, text: "Wonderful experience! My daughter's math skills have improved tremendously." },
+            { author: "Ravi Rao", rating: 5, text: "Good infrastructure and experienced faculty. Very satisfied!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Kammanahalli",
+          address: "Kammanahalli Main Road, Near Metro Station, Bengaluru, Karnataka 560043",
+          phone: "+91 99809 98588",
+          lat: 13.0100,
+          lng: 77.6400,
+          reviews: [
+            { author: "Meera Kumar", rating: 5, text: "Amazing results! My child can now do complex calculations mentally." },
+            { author: "Suresh Iyer", rating: 4, text: "Excellent center with well-structured courses. My child looks forward to every class." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Kalyan Nagar",
+          address: "Kalyan Nagar Main Road, Near HBR Layout, Bengaluru, Karnataka 560043",
+          phone: "+91 99809 98588",
+          lat: 13.0200,
+          lng: 77.6500,
+          reviews: [
+            { author: "Priya Reddy", rating: 5, text: "Fantastic teaching methodology! My son's concentration has improved a lot." },
+            { author: "Rajesh Menon", rating: 5, text: "Best decision for my child's education. Highly recommended!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Horamavu",
+          address: "Horamavu Main Road, Near Agara Lake, Bengaluru, Karnataka 560043",
+          phone: "+91 99809 98588",
+          lat: 13.0300,
+          lng: 77.6600,
+          reviews: [
+            { author: "Deepa Nair", rating: 5, text: "Great learning environment. My son's confidence has increased tremendously." },
+            { author: "Vikram Rao", rating: 4, text: "Professional staff and good facilities. Very satisfied!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Thanisandra",
+          address: "Thanisandra Main Road, Near Manyata Tech Park, Bengaluru, Karnataka 560064",
+          phone: "+91 99809 98588",
+          lat: 13.0500,
+          lng: 77.6200,
+          reviews: [
+            { author: "Kavitha Iyer", rating: 5, text: "Outstanding teaching quality! My daughter's calculation speed has improved dramatically." },
+            { author: "Mohan Kumar", rating: 5, text: "Excellent center with well-structured courses. Highly satisfied!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Nagarbhavi",
+          address: "Nagarbhavi Main Road, Near BDA Complex, Bengaluru, Karnataka 560072",
+          phone: "+91 99809 98588",
+          lat: 12.9500,
+          lng: 77.5200,
+          reviews: [
+            { author: "Sunita Menon", rating: 5, text: "Fantastic program! My child's problem-solving skills have improved significantly." },
+            { author: "Arjun Rao", rating: 4, text: "Good location and friendly staff. The abacus method really works!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Magadi Road",
+          address: "Magadi Road, Near Metro Station, Bengaluru, Karnataka 560023",
+          phone: "+91 99809 98588",
+          lat: 12.9700,
+          lng: 77.5400,
+          reviews: [
+            { author: "Latha Iyer", rating: 5, text: "Excellent training center. My son loves the classes and his mental math skills are amazing." },
+            { author: "Ramesh Reddy", rating: 5, text: "Best abacus classes in the area. Highly professional staff." }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Basaveshwaranagar",
+          address: "Basaveshwaranagar Main Road, Near Metro Station, Bengaluru, Karnataka 560079",
+          phone: "+91 99809 98588",
+          lat: 12.9800,
+          lng: 77.5300,
+          reviews: [
+            { author: "Geetha Nair", rating: 5, text: "Wonderful experience! My daughter's math skills have improved tremendously." },
+            { author: "Venkatesh Menon", rating: 4, text: "Good infrastructure and experienced faculty. Very satisfied!" }
+          ]
+        },
+        {
+          name: "Matrix Abacus - Sanjay Nagar",
+          address: "Sanjay Nagar Main Road, Near RT Nagar, Bengaluru, Karnataka 560094",
+          phone: "+91 99809 98588",
+          lat: 13.0100,
+          lng: 77.5900,
+          reviews: [
+            { author: "Shobha Rao", rating: 5, text: "Amazing results! My child can now do complex calculations mentally." },
+            { author: "Prakash Iyer", rating: 5, text: "Excellent center with well-structured courses. My child looks forward to every class." }
+          ]
+        }
+      ],
+      mapQuery: "Matrix Abacus",
+      social: {
+        facebook: "https://www.facebook.com/matrixabacus/",
+        youtube: "https://www.youtube.com/@matrixabacus9720",
+        instagram: "https://instagram.com/"
+      },
+      contact: {
+        address: "6th Main, Dwaraka Nagar, 14, Vidya Deep, next to SBI Bank, Vijaynagar, Yelahanka, Bengaluru, Karnataka 560064",
+        email: "info@matrixabacus.com",
+        phone: "+919980998588"
+      }
+    };
+
+    (function() {
+      var toggle = document.getElementById('menu-toggle');
+      var links = document.getElementById('nav-links');
+      var thanks = document.getElementById('thanks');
+      var featured = document.getElementById('featured-video');
+      var featuredThumb = document.getElementById('featured-thumb');
+      
+      function renderFromData() {
+        function resolveUrl(item, mode) {
+          // mode: 'view' for images, 'download' for pdfs/links
+          if (item && item.href) return item.href;
+          if (item && item.driveId) {
+            var action = mode === 'view' ? 'view' : 'download';
+            return 'https://drive.google.com/uc?export=' + action + '&id=' + encodeURIComponent(item.driveId);
+          }
+          return '';
+        }
+        // Populate menus
+        function populateMenu(containerId, items) {
+          var container = document.getElementById(containerId);
+          if (!container || !Array.isArray(items)) return;
+          container.innerHTML = items.map(function(item) {
+            var url = resolveUrl(item, 'download');
+            return '<li><a href="' + url + '" download class="block px-4 py-2 hover:bg-gray-200">' + item.label.replace(/\s/g, '&nbsp;') + '</a></li>';
+          }).join('');
+        }
+
+        populateMenu('standard-exam-menu', DATA.standardExams);
+        populateMenu('level-menu', DATA.levelWorksheets);
+        populateMenu('results-menu', DATA.results);
+
+        // Populate gallery with pagination
+        var gallery = document.getElementById('gallery-grid');
+        var loadMoreBtn = document.getElementById('gallery-load-more');
+        var showAllBtn = document.getElementById('gallery-show-all');
+        if (gallery) {
+          var PAGE_SIZE = 6;
+          if (!renderFromData._galleryIndex) renderFromData._galleryIndex = 0;
+          function renderChunk() {
+            if (!Array.isArray(DATA.galleryImages)) return;
+            var start = renderFromData._galleryIndex;
+            var end = Math.min(start + PAGE_SIZE, DATA.galleryImages.length);
+            var slice = DATA.galleryImages.slice(start, end);
+            var html = slice.map(function(img, idx) {
+              var src = typeof img === 'string' ? img : resolveUrl(img, 'view');
+              var alt = 'Gallery image ' + (start + idx + 1);
+              return '<img data-gallery-idx="' + (start + idx) + '" src="' + src + '" alt="' + alt + '" class="rounded-lg shadow-md w-full h-56 object-cover cursor-pointer" loading="lazy">';
+            }).join('');
+            if (start === 0) {
+              gallery.innerHTML = html;
+            } else {
+              gallery.insertAdjacentHTML('beforeend', html);
+            }
+            renderFromData._galleryIndex = end;
+            updateButtons();
+          }
+          function renderAll() {
+            if (!Array.isArray(DATA.galleryImages)) return;
+            var start = renderFromData._galleryIndex;
+            var slice = DATA.galleryImages.slice(start);
+            var html = slice.map(function(img, idx) {
+              var src = typeof img === 'string' ? img : resolveUrl(img, 'view');
+              var alt = 'Gallery image ' + (start + idx + 1);
+              return '<img data-gallery-idx="' + (start + idx) + '" src="' + src + '" alt="' + alt + '" class="rounded-lg shadow-md w-full h-56 object-cover cursor-pointer" loading="lazy">';
+            }).join('');
+            if (start === 0) {
+              gallery.innerHTML = html;
+            } else {
+              gallery.insertAdjacentHTML('beforeend', html);
+            }
+            renderFromData._galleryIndex = DATA.galleryImages.length;
+            updateButtons();
+          }
+          function updateButtons() {
+            var atEnd = renderFromData._galleryIndex >= (Array.isArray(DATA.galleryImages) ? DATA.galleryImages.length : 0);
+            if (loadMoreBtn) loadMoreBtn.classList.toggle('hidden', atEnd);
+            if (showAllBtn) showAllBtn.classList.toggle('hidden', atEnd);
+          }
+          // initial render
+          renderFromData._galleryIndex = 0;
+          renderChunk();
+          // bind buttons
+          if (loadMoreBtn) loadMoreBtn.onclick = renderChunk;
+          if (showAllBtn) showAllBtn.onclick = renderAll;
+
+          // delegate click to open lightbox
+          gallery.onclick = function(e) {
+            var t = e.target;
+            if (t && t.hasAttribute('data-gallery-idx')) {
+              openLightbox(parseInt(t.getAttribute('data-gallery-idx')));
+            }
+          };
+        }
+
+        // Populate FAQs as accordion
+        var faqList = document.getElementById('faq-list');
+        if (faqList && Array.isArray(DATA.faqs)) {
+          faqList.innerHTML = DATA.faqs.map(function(f, i) {
+            var id = 'faq-' + i;
+            return '<div class="bg-white rounded-md shadow-sm">\
+<button class="w-full text-left px-4 py-3 font-semibold flex justify-between items-center" aria-expanded="false" aria-controls="' + id + '">\
+<span>' + f.q + '</span>\
+<svg class="w-5 h-5 transform transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>\
+</button>\
+<div id="' + id + '" class="px-4 pb-4 hidden">' + f.a + '</div>\
+</div>';
+          }).join('');
+
+          // wire up toggles
+          faqList.querySelectorAll('button[aria-controls]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              var panelId = btn.getAttribute('aria-controls');
+              var panel = document.getElementById(panelId);
+              var expanded = btn.getAttribute('aria-expanded') === 'true';
+              btn.setAttribute('aria-expanded', String(!expanded));
+              if (panel) {
+                if (expanded) {
+                  panel.classList.add('hidden');
+                  btn.querySelector('svg').classList.remove('rotate-45');
+                } else {
+                  panel.classList.remove('hidden');
+                  btn.querySelector('svg').classList.add('rotate-45');
+                }
+              }
+            });
+          });
+        }
+
+        // Featured video by ID
+        if (featuredThumb && DATA.featuredVideoId) {
+          featuredThumb.src = 'https://img.youtube.com/vi/' + DATA.featuredVideoId + '/hqdefault.jpg';
+        }
+
+        // Hero
+        var heroTitle = document.getElementById('hero-title');
+        var heroSubtitle = document.getElementById('hero-subtitle');
+        var heroCtaPrimary = document.getElementById('hero-cta-primary');
+        var heroCtaSecondary = document.getElementById('hero-cta-secondary');
+        var heroImage = document.getElementById('hero-image');
+        if (DATA.hero) {
+          if (heroTitle) heroTitle.textContent = DATA.hero.title || heroTitle.textContent;
+          if (heroSubtitle) heroSubtitle.textContent = DATA.hero.subtitle || heroSubtitle.textContent;
+          if (heroCtaPrimary && DATA.hero.primaryCta) {
+            heroCtaPrimary.textContent = DATA.hero.primaryCta.label || heroCtaPrimary.textContent;
+            heroCtaPrimary.href = DATA.hero.primaryCta.href || heroCtaPrimary.href;
+          }
+          if (heroCtaSecondary && DATA.hero.secondaryCta) {
+            heroCtaSecondary.textContent = DATA.hero.secondaryCta.label || heroCtaSecondary.textContent;
+            heroCtaSecondary.href = DATA.hero.secondaryCta.href || heroCtaSecondary.href;
+          }
+          if (heroImage && DATA.hero.image) {
+            var heroSrc = (typeof DATA.hero.image === 'string') ? DATA.hero.image : resolveUrl(DATA.hero.image, 'view');
+            if (heroSrc) heroImage.src = heroSrc;
+          }
+        }
+
+        // About stats
+        var aboutStats = document.getElementById('about-stats');
+        if (aboutStats && Array.isArray(DATA.aboutStats)) {
+          aboutStats.innerHTML = DATA.aboutStats.map(function(s) {
+            return '<div class="p-6 bg-white rounded-lg shadow-md transition transform hover:-translate-y-1 hover:shadow-lg">\
+<h3 class="text-2xl font-bold mb-2 text-blue-700">' + s.heading + '</h3>\
+<p>' + s.text + '</p>\
+</div>';
+          }).join('');
+        }
+
+        // Map - Initialize Google Maps with Bangalore locations
+        // This will be initialized after Google Maps API loads
+
+        // Social links
+        var fb = document.getElementById('facebook-link');
+        var yt = document.getElementById('youtube-link');
+        var ig = document.getElementById('instagram-link');
+        if (DATA.social) {
+          if (fb && DATA.social.facebook) fb.href = DATA.social.facebook;
+          if (yt && DATA.social.youtube) yt.href = DATA.social.youtube;
+          if (ig && DATA.social.instagram) ig.href = DATA.social.instagram;
+        }
+
+        // Footer contact
+        var addrLink = document.getElementById('footer-address-link');
+        var emailLink = document.getElementById('footer-email-link');
+        var phoneLink = document.getElementById('footer-phone-link');
+        if (DATA.contact) {
+          if (addrLink && DATA.contact.address) {
+            addrLink.textContent = DATA.contact.address;
+            addrLink.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(DATA.contact.address);
+          }
+          if (emailLink && DATA.contact.email) {
+            emailLink.textContent = DATA.contact.email;
+            emailLink.href = 'mailto:' + DATA.contact.email;
+          }
+          if (phoneLink && DATA.contact.phone) {
+            var phoneHuman = DATA.contact.phone.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            phoneLink.textContent = phoneHuman;
+            phoneLink.href = 'tel:' + DATA.contact.phone;
+          }
+        }
+      }
+
+      // Lightbox controls
+      var lightbox = document.getElementById('lightbox');
+      var lightboxImg = document.getElementById('lightbox-image');
+      var lightboxPrev = document.getElementById('lightbox-prev');
+      var lightboxNext = document.getElementById('lightbox-next');
+      var lightboxClose = document.getElementById('lightbox-close');
+      var currentIndex = -1;
+      function getImageSrcByIndex(index) {
+        var img = DATA.galleryImages[index];
+        if (!img) return '';
+        if (typeof img === 'string') return img;
+        return (img.href) ? img.href : (img.driveId ? ('https://drive.google.com/uc?export=view&id=' + encodeURIComponent(img.driveId)) : '');
+      }
+      function showLightbox(index) {
+        currentIndex = index;
+        lightboxImg.src = getImageSrcByIndex(currentIndex);
+        lightbox.classList.remove('hidden');
+        lightbox.classList.add('flex');
+      }
+      function hideLightbox() {
+        lightbox.classList.add('hidden');
+        lightbox.classList.remove('flex');
+        lightboxImg.src = '';
+      }
+      function openLightbox(index) { showLightbox(index); }
+      window.openLightbox = openLightbox;
+
+      if (lightboxPrev) lightboxPrev.onclick = function() {
+        if (!Array.isArray(DATA.galleryImages) || DATA.galleryImages.length === 0) return;
+        currentIndex = (currentIndex - 1 + DATA.galleryImages.length) % DATA.galleryImages.length;
+        showLightbox(currentIndex);
+      };
+      if (lightboxNext) lightboxNext.onclick = function() {
+        if (!Array.isArray(DATA.galleryImages) || DATA.galleryImages.length === 0) return;
+        currentIndex = (currentIndex + 1) % DATA.galleryImages.length;
+        showLightbox(currentIndex);
+      };
+      if (lightboxClose) lightboxClose.onclick = hideLightbox;
+      if (lightbox) lightbox.addEventListener('click', function(e) {
+        if (e.target === lightbox) hideLightbox();
+      });
+      document.addEventListener('keydown', function(e) {
+        if (lightbox.classList.contains('hidden')) return;
+        if (e.key === 'Escape') hideLightbox();
+        if (e.key === 'ArrowLeft') lightboxPrev && lightboxPrev.click();
+        if (e.key === 'ArrowRight') lightboxNext && lightboxNext.click();
+      });
+
+      // Initial render from embedded DATA
+      renderFromData();
+
+      // Try to load external content.json for dynamic updates without editing HTML
+      fetch('content.json', { cache: 'no-cache' }).then(function(res) {
+        if (!res.ok) throw new Error('No content.json');
+        return res.json();
+      }).then(function(remote) {
+        if (remote && typeof remote === 'object') {
+          window.DATA = Object.assign({}, window.DATA, remote);
+          renderFromData();
+        }
+      }).catch(function() { /* optional: ignore if not present */ });
+      if (featured) {
+        featured.addEventListener('click', function() {
+          var iframe = document.createElement('iframe');
+          iframe.setAttribute('class', 'w-full h-full');
+          var vid = DATA.featuredVideoId || 'sUjXo2W6o0c';
+          iframe.setAttribute('src', 'https://www.youtube.com/embed/' + vid + '?start=2&autoplay=1');
+          iframe.setAttribute('title', 'Featured on Discovery');
+          iframe.setAttribute('frameborder', '0');
+          iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+          iframe.setAttribute('allowfullscreen', 'true');
+          featured.innerHTML = '';
+          featured.appendChild(iframe);
+        });
+      }
+      if (window.location.hash === '#thanks' && thanks) {
+        thanks.classList.remove('hidden');
+        window.scrollTo({ top: thanks.offsetTop - 80, behavior: 'smooth' });
+      }
+      if (toggle && links) {
+        toggle.addEventListener('click', function() {
+          if (links.classList.contains('hidden')) {
+            links.classList.remove('hidden');
+          } else {
+            links.classList.add('hidden');
+          }
+        });
+      }
+
+      // Dynamic year in footer
+      var yearSpan = document.getElementById('current-year');
+      if (yearSpan) {
+        yearSpan.textContent = String(new Date().getFullYear());
+      }
+
+      // Ensure WhatsApp button is visible and working
+      var whatsappButtonInitialized = false;
+      function ensureWhatsAppButton() {
+        var whatsappBtn = document.querySelector('.whatsapp-float');
+        if (whatsappBtn) {
+          whatsappBtn.style.setProperty('display', 'flex', 'important');
+          whatsappBtn.style.setProperty('visibility', 'visible', 'important');
+          whatsappBtn.style.setProperty('opacity', '1', 'important');
+          whatsappBtn.style.setProperty('z-index', '99999', 'important');
+          whatsappBtn.style.setProperty('position', 'fixed', 'important');
+          
+          // Ensure the link is correct
+          var whatsappUrl = 'https://wa.me/919980998588?text=Hello%20Matrix%20Abacus%2C%20I%20would%20like%20to%20know%20more%20about%20your%20programs.';
+          if (!whatsappBtn.href || whatsappBtn.href.indexOf('wa.me') === -1) {
+            whatsappBtn.href = whatsappUrl;
+          }
+          
+          // Add click handler as backup (only once)
+          if (!whatsappButtonInitialized) {
+            whatsappBtn.addEventListener('click', function(e) {
+              // Ensure it opens WhatsApp
+              var currentHref = this.getAttribute('href');
+              if (!currentHref || currentHref.indexOf('wa.me') === -1) {
+                e.preventDefault();
+                window.open(whatsappUrl, '_blank');
+              }
+            });
+            whatsappButtonInitialized = true;
+          }
+        }
+      }
+      
+      // Initialize immediately
+      ensureWhatsAppButton();
+      
+      // Also ensure after page load
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', ensureWhatsAppButton);
+      }
+      
+      // And after window load
+      window.addEventListener('load', ensureWhatsAppButton);
+      
+      // Periodic check (in case something hides it)
+      setInterval(ensureWhatsAppButton, 2000);
+    })();
+  </script>
+
+  <!-- Leaflet CSS and JS (Free alternative to Google Maps) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <script>
+    var map;
+    var markers = [];
+    var currentLocationData = null;
+
+    function initMap() {
+      // Wait for DATA to be available
+      if (!window.DATA || !window.DATA.bangaloreLocations) {
+        setTimeout(initMap, 100);
+        return;
+      }
+
+      // Center map on Bangalore
+      var bangalore = [12.9716, 77.5946];
+      
+      // Create map using Leaflet (OpenStreetMap - Free, no API key needed)
+      var mapContainer = document.getElementById('map-container');
+      if (!mapContainer) {
+        return;
+      }
+
+      // Initialize map
+      map = L.map('map-container').setView(bangalore, 11);
+
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(map);
+
+      // Store bounds to fit all markers after they're added
+      var allBounds = [];
+
+      // Custom icon for markers
+      var customIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background-color: #2563eb; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><div style="transform: rotate(45deg); color: white; text-align: center; line-height: 24px; font-size: 18px;">📍</div></div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 30],
+        popupAnchor: [0, -30]
+      });
+
+      // Add markers for each location
+      window.DATA.bangaloreLocations.forEach(function(location, index) {
+        // Create popup content
+        var popupContent = document.createElement('div');
+        popupContent.style.padding = '10px';
+        popupContent.innerHTML = '<strong>' + location.name + '</strong><br>' + 
+          '<small style="color: #666;">' + location.address + '</small><br>' +
+          '<button class="view-reviews-btn" data-location-index="' + index + '" style="margin-top: 8px; padding: 6px 12px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">View Reviews</button>';
+
+        var marker = L.marker([location.lat, location.lng], { icon: customIcon })
+          .addTo(map)
+          .bindPopup(popupContent, {
+            maxWidth: 300
+          });
+
+        // Add click listener to marker
+        marker.on('click', function() {
+          showLocationModal(location);
+        });
+
+        // Add click listener to popup button after popup opens
+        marker.on('popupopen', function() {
+          var btn = document.querySelector('.view-reviews-btn[data-location-index="' + index + '"]');
+          if (btn) {
+            btn.addEventListener('click', function() {
+              showLocationModal(location);
+              map.closePopup();
+            });
+          }
+        });
+
+        markers.push(marker);
+        allBounds.push([location.lat, location.lng]);
+      });
+
+      // Fit map to show all 30+ locations
+      if (allBounds.length > 0) {
+        setTimeout(function() {
+          map.fitBounds(allBounds, { padding: [50, 50], maxZoom: 13 });
+        }, 500);
+      }
+    }
+
+
+    // Show location review modal
+    function showLocationModal(location) {
+      currentLocationData = location;
+      var modal = document.getElementById('location-modal');
+      var modalName = document.getElementById('modal-location-name');
+      var modalAddress = document.getElementById('modal-location-address');
+      var modalPhone = document.getElementById('modal-location-phone');
+      var modalReviews = document.getElementById('modal-reviews');
+
+      if (modal && modalName && modalAddress && modalPhone && modalReviews) {
+        modalName.textContent = location.name;
+        modalAddress.textContent = '📍 ' + location.address;
+        modalPhone.innerHTML = '📞 <a href="tel:' + location.phone.replace(/\s/g, '') + '" class="text-blue-600 hover:underline">' + location.phone + '</a>';
+
+        // Render reviews
+        if (location.reviews && location.reviews.length > 0) {
+          modalReviews.innerHTML = location.reviews.map(function(review) {
+            var stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+            return '<div class="review-item">' +
+              '<div class="review-author">' + review.author + '</div>' +
+              '<div class="review-rating">' + stars + '</div>' +
+              '<div class="review-text">' + review.text + '</div>' +
+              '</div>';
+          }).join('');
+        } else {
+          modalReviews.innerHTML = '<p class="text-gray-500">No reviews available yet.</p>';
+        }
+
+        modal.classList.add('show');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    // Close modal
+    function closeLocationModal() {
+      var modal = document.getElementById('location-modal');
+      if (modal) {
+        modal.classList.remove('show');
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    }
+
+    // Review Modal Functions
+    function openReviewModal(location) {
+      var reviewModal = document.getElementById('review-modal');
+      var reviewLocationName = document.getElementById('review-location-name');
+      var reviewLocationAddress = document.getElementById('review-location-address');
+      var ratingSelect = document.getElementById('review-rating');
+      var ratingStars = document.getElementById('rating-stars');
+
+      if (reviewModal && reviewLocationName && reviewLocationAddress) {
+        reviewLocationName.value = location.name;
+        reviewLocationAddress.value = location.address;
+        
+        // Update rating stars display
+        if (ratingSelect && ratingStars) {
+          // Remove existing listener if any
+          var newRatingSelect = ratingSelect.cloneNode(true);
+          ratingSelect.parentNode.replaceChild(newRatingSelect, ratingSelect);
+          ratingSelect = newRatingSelect;
+          
+          ratingSelect.addEventListener('change', function() {
+            var rating = parseInt(this.value) || 0;
+            ratingStars.innerHTML = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+            ratingStars.className = 'text-2xl ' + (rating > 0 ? 'text-yellow-400' : 'text-gray-300');
+          });
+        }
+
+        reviewModal.classList.add('show');
+        reviewModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeReviewModal() {
+      var reviewModal = document.getElementById('review-modal');
+      var reviewForm = document.getElementById('review-form');
+      if (reviewModal) {
+        reviewModal.classList.remove('show');
+        reviewModal.classList.add('hidden');
+        document.body.style.overflow = '';
+        if (reviewForm) {
+          reviewForm.reset();
+          var ratingStars = document.getElementById('rating-stars');
+          if (ratingStars) {
+            ratingStars.innerHTML = '';
+            ratingStars.className = 'text-2xl text-gray-300';
+          }
+          var reviewStatus = document.getElementById('review-status');
+          if (reviewStatus) {
+            reviewStatus.textContent = '';
+            reviewStatus.className = 'mb-4 text-sm';
+          }
+        }
+      }
+    }
+
+    // Initialize modal close handlers
+    document.addEventListener('DOMContentLoaded', function() {
+      var modalClose = document.getElementById('modal-close');
+      var modal = document.getElementById('location-modal');
+      var writeReviewBtn = document.getElementById('write-review-btn');
+      var reviewModalClose = document.getElementById('review-modal-close');
+      var reviewCancelBtn = document.getElementById('review-cancel-btn');
+      var reviewModal = document.getElementById('review-modal');
+      var reviewForm = document.getElementById('review-form');
+
+      // Location modal handlers
+      if (modalClose) {
+        modalClose.addEventListener('click', closeLocationModal);
+      }
+
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) {
+            closeLocationModal();
+          }
+        });
+      }
+
+      // Write Review button handler
+      if (writeReviewBtn) {
+        writeReviewBtn.addEventListener('click', function() {
+          if (currentLocationData) {
+            closeLocationModal();
+            setTimeout(function() {
+              openReviewModal(currentLocationData);
+            }, 300);
+          }
+        });
+      }
+
+      // Review modal close handlers
+      if (reviewModalClose) {
+        reviewModalClose.addEventListener('click', closeReviewModal);
+      }
+
+      if (reviewCancelBtn) {
+        reviewCancelBtn.addEventListener('click', closeReviewModal);
+      }
+
+      if (reviewModal) {
+        reviewModal.addEventListener('click', function(e) {
+          if (e.target === reviewModal) {
+            closeReviewModal();
+          }
+        });
+      }
+
+      // Review form submission
+      if (reviewForm) {
+        reviewForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          var submitBtn = reviewForm.querySelector('button[type="submit"]');
+          var reviewStatus = document.getElementById('review-status');
+          var formData = new FormData(reviewForm);
+          
+          // Disable submit button
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+          }
+
+          // Set status
+          if (reviewStatus) {
+            reviewStatus.textContent = 'Submitting your review...';
+            reviewStatus.className = 'mb-4 text-sm text-blue-600';
+          }
+
+          // Prepare data for FormSubmit
+          var reviewData = {
+            _subject: 'New Review for ' + formData.get('location_name'),
+            _template: 'table',
+            _captcha: 'false',
+            location_name: formData.get('location_name'),
+            location_address: formData.get('location_address'),
+            reviewer_name: formData.get('reviewer_name'),
+            reviewer_email: formData.get('reviewer_email'),
+            rating: formData.get('rating'),
+            review_text: formData.get('review_text')
+          };
+
+          var formDataObj = new FormData();
+          Object.keys(reviewData).forEach(function(key) {
+            formDataObj.append(key, reviewData[key]);
+          });
+
+          // Submit to FormSubmit
+          fetch('https://formsubmit.co/ajax/info@matrixabacus.com', {
+            method: 'POST',
+            body: formDataObj
+          }).then(function(res) {
+            if (!res.ok) throw new Error('Submission failed');
+            return res.json();
+          }).then(function() {
+            if (reviewStatus) {
+              reviewStatus.textContent = 'Thank you! Your review has been submitted successfully.';
+              reviewStatus.className = 'mb-4 text-sm text-green-600';
+            }
+            reviewForm.reset();
+            var ratingStars = document.getElementById('rating-stars');
+            if (ratingStars) {
+              ratingStars.innerHTML = '';
+              ratingStars.className = 'text-2xl text-gray-300';
+            }
+            setTimeout(function() {
+              closeReviewModal();
+            }, 2000);
+          }).catch(function(error) {
+            if (reviewStatus) {
+              reviewStatus.textContent = 'Something went wrong. Please try again or contact us directly.';
+              reviewStatus.className = 'mb-4 text-sm text-red-600';
+            }
+          }).finally(function() {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Submit Review';
+              submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+          });
+        });
+      }
+
+      // Close on Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          var reviewModal = document.getElementById('review-modal');
+          if (reviewModal && reviewModal.classList.contains('show')) {
+            closeReviewModal();
+          } else {
+            closeLocationModal();
+          }
+        }
+      });
+    });
+
+    // Initialize map when Leaflet and page are ready
+    function tryInitMap() {
+      if (typeof L !== 'undefined' && document.getElementById('map-container')) {
+        initMap();
+      } else {
+        setTimeout(tryInitMap, 100);
+      }
+    }
+
+    // Start initialization
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', tryInitMap);
+    } else {
+      tryInitMap();
+    }
+  </script>
+  
+  <!-- AOS JS: enable scroll-based animations -->
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.AOS) {
+        AOS.init({ once: true });
+      }
+      // Enhance contact form: AJAX submit to FormSubmit
+      var form = document.getElementById('contact-form');
+      var submitBtn = document.getElementById('contact-submit');
+      var statusEl = document.getElementById('contact-status');
+      var thanksEl = document.getElementById('thanks');
+      function setStatus(msg, ok) {
+        if (!statusEl) return;
+        statusEl.textContent = msg || '';
+        statusEl.className = 'sm:col-span-2 text-sm mt-1 ' + (ok ? 'text-green-700' : 'text-red-600');
+      }
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          setStatus('', true);
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            submitBtn.textContent = 'Submitting...';
+          }
+          var fd = new FormData(form);
+          // FormSubmit AJAX endpoint
+          fetch('https://formsubmit.co/ajax/info@matrixabacus.com', {
+            method: 'POST',
+            body: fd
+          }).then(function(res) {
+            if (!res.ok) throw new Error('Submission failed');
+            return res.json();
+          }).then(function() {
+            setStatus('Thanks! We have received your details.', true);
+            if (thanksEl) thanksEl.classList.remove('hidden');
+            form.reset();
+          }).catch(function() {
+            setStatus('Something went wrong. Please try again or use email/phone.', false);
+          }).finally(function() {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+              submitBtn.textContent = 'Submit';
+            }
+          });
+        });
+      }
+    });
+  </script>
+
+  <!-- WhatsApp Floating Button - Platform Independent -->
+  <a href="https://wa.me/919980998588?text=Hello%20Matrix%20Abacus%2C%20I%20would%20like%20to%20know%20more%20about%20your%20programs." 
+     class="whatsapp-float" 
+     target="_blank" 
+     rel="noopener noreferrer"
+     aria-label="Contact us on WhatsApp"
+     title="Chat with us on WhatsApp"
+     style="display: flex !important; visibility: visible !important; opacity: 1 !important; z-index: 99999 !important;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+    </svg>
+    <span class="sr-only">WhatsApp</span>
+  </a>
+ 
+</body>
+</html>
