@@ -531,6 +531,11 @@
     <!--
       Update the franchise button: clicking it will open an external Google Form in a
       new tab. Replace the example URL below with your actual Google Form link.
+      To enable email notifications in Google Forms:
+      1. Open your Google Form
+      2. Click "Responses" tab
+      3. Click three dots (⋮) next to "Responses"
+      4. Select "Get email notifications for new responses"
     -->
     <a href="https://forms.gle/your-google-form-id" target="_blank" rel="noopener" class="inline-block px-6 py-3 rounded-md text-white bg-gradient-to-r from-blue-600 to-green-500 hover:from-blue-700 hover:to-green-600 transition-transform transform hover:scale-105">Apply for a Franchise</a>
   </section>
@@ -545,23 +550,68 @@
   <!-- Contact Section -->
   <section id="contact" class="py-16 px-6 bg-gray-50 text-center" data-aos="fade-up">
     <h2 class="text-3xl font-bold mb-6">Contact Us for More Information</h2>
+    
+    <!-- Google Form Implementation - Option 1: Embedded Form (Recommended) -->
+    <!-- 
+      INSTRUCTIONS TO SET UP GOOGLE FORM:
+      1. Go to https://forms.google.com
+      2. Create a new form with these fields:
+         - Parent Name (Short answer, Required)
+         - Email (Short answer, Required, Email validation)
+         - Mobile Number (Short answer, Required)
+         - Child Name (Short answer, Optional)
+         - Child Class (Short answer, Optional)
+      3. Click "Send" button (top right)
+      4. Click the "Link" icon (</>)
+      5. Copy the embed code or form URL
+      6. Replace GOOGLE_FORM_ID below with your form ID
+      7. Form ID is in the URL: forms.gle/XXXXX or docs.google.com/forms/d/XXXXX/viewform
+    -->
+    
+    <!-- Option A: Embedded Google Form (iframe) - Uncomment to use -->
     <!--
-      Contact form
-      ----------
-      The form container previously used a translucent white background (bg-white/80) which
-      caused poor contrast between the text and the background on some devices.  In
-      addition, the `sky` colour classes do not exist in the version of Tailwind
-      included on this page (v2.2), so the submit button ended up inheriting
-      default styles and became invisible.  To ensure the call‑to‑action stands
-      out, we switch to a solid white background with rounded corners and an
-      elevated shadow.  The submit button now uses the supported `blue` colour
-      palette to guarantee visibility across browsers.
+    <div class="max-w-3xl mx-auto bg-white shadow-xl rounded-xl p-6">
+      <iframe src="https://docs.google.com/forms/d/e/GOOGLE_FORM_ID/viewform?embedded=true" 
+              width="100%" 
+              height="800" 
+              frameborder="0" 
+              marginheight="0" 
+              marginwidth="0"
+              class="rounded-lg">Loading…</iframe>
+    </div>
+    -->
+    
+    <!-- Option B: Link to Google Form (Opens in new tab) - Uncomment to use -->
+    <!--
+    <div class="max-w-3xl mx-auto bg-white shadow-xl rounded-xl p-6">
+      <p class="text-gray-600 mb-6">Click the button below to fill out our contact form:</p>
+      <a href="https://forms.gle/GOOGLE_FORM_ID" 
+         target="_blank" 
+         rel="noopener noreferrer"
+         class="inline-block px-8 py-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-transform transform hover:scale-105 text-lg font-semibold">
+        Open Contact Form
+      </a>
+    </div>
+    -->
+    
+    <!-- Option C: Custom Form with Email Integration (Current - FormSubmit sends to email) -->
+    <!-- 
+      CURRENT SETUP: FormSubmit sends messages directly to info@matrixabacus.com
+      This form automatically sends emails when submitted.
+      
+      To use Google Forms instead (which also sends to email):
+      1. Create a Google Form
+      2. In Google Forms settings, enable "Collect email addresses"
+      3. Set up email notifications in Google Forms responses
+      4. Uncomment Option A or B above and comment out this form
     -->
     <form id="contact-form" action="https://formsubmit.co/info@matrixabacus.com" method="POST" class="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white shadow-xl rounded-xl p-6">
+      <!-- FormSubmit Configuration - Sends directly to email -->
       <input type="hidden" name="_subject" value="New inquiry from Matrix Abacus website">
       <input type="hidden" name="_template" value="table">
       <input type="hidden" name="_captcha" value="false">
       <input type="hidden" name="_next" value="index.html#thanks">
+      <input type="hidden" name="_replyto" value="">
 
       <label class="sr-only" for="parent_name">Parent Name</label>
       <input id="parent_name" type="text" name="parent_name" placeholder="Parent Name" class="border p-3 rounded-md" required autocomplete="name">
@@ -579,11 +629,6 @@
       <input id="child_class" type="text" name="child_class" placeholder="Child Class" class="border p-3 rounded-md" autocomplete="off">
 
       <div class="sm:col-span-2">
-        <!--
-          Use the Tailwind blue palette instead of sky/cyan which are unavailable
-          in v2.2.  The button has a prominent blue colour with a darker hover
-          state to draw attention without overwhelming the form.
-        -->
         <button id="contact-submit" type="submit" class="w-full px-6 py-3 rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-transform transform hover:scale-105">Submit</button>
       </div>
 
@@ -1499,8 +1544,97 @@
         return;
       }
 
-      // Initialize map
-      map = L.map('map-container').setView(bangalore, 11);
+      // Initialize map with scroll wheel zoom completely disabled
+      // User must click the map first to enable zoom functionality
+      map = L.map('map-container', {
+        scrollWheelZoom: false,  // Completely disabled - no zoom on scroll
+        doubleClickZoom: true,   // Allow double-click to zoom in
+        boxZoom: true,           // Allow box zoom (shift+click and drag)
+        keyboard: true,          // Allow keyboard controls (+/- keys to zoom)
+        dragging: true,          // Allow click and drag to pan
+        zoomControl: true,       // Show zoom controls (+/- buttons)
+        touchZoom: false,        // Disable touch zoom initially
+        tap: false               // Disable tap zoom initially
+      }).setView(bangalore, 11);
+      
+      // Completely disable scroll zoom - it will only be enabled after user clicks
+      map.scrollWheelZoom.disable();
+      
+      // Track if user has clicked on the map
+      var mapClicked = false;
+      var mapFocused = false;
+      
+      if (mapContainer) {
+        // Enable zoom ONLY when user clicks on the map
+        mapContainer.addEventListener('mousedown', function(e) {
+          mapClicked = true;
+          mapFocused = true;
+          // Enable scroll zoom and touch zoom after click
+          map.scrollWheelZoom.enable();
+          map.touchZoom.enable();
+        });
+        
+        // Enable zoom on touch devices when user touches the map
+        mapContainer.addEventListener('touchstart', function(e) {
+          mapClicked = true;
+          mapFocused = true;
+          map.scrollWheelZoom.enable();
+          map.touchZoom.enable();
+        }, { passive: true });
+        
+        // Disable zoom when user clicks anywhere outside the map
+        document.addEventListener('click', function(e) {
+          if (!mapContainer.contains(e.target)) {
+            mapClicked = false;
+            mapFocused = false;
+            map.scrollWheelZoom.disable();
+            map.touchZoom.disable();
+          }
+        }, true); // Use capture phase to catch clicks early
+        
+        // Disable zoom when mouse leaves the map area
+        mapContainer.addEventListener('mouseleave', function() {
+          mapFocused = false;
+          // Disable if user hasn't clicked or has clicked outside
+          if (!mapClicked) {
+            map.scrollWheelZoom.disable();
+            map.touchZoom.disable();
+          }
+        });
+        
+        // Aggressively prevent scroll events from zooming the map when not clicked
+        // But allow page to scroll normally
+        mapContainer.addEventListener('wheel', function(e) {
+          if (!mapFocused && !mapClicked) {
+            // Stop the event from reaching Leaflet's zoom handler
+            e.stopPropagation();
+            // Don't prevent default - let the page scroll normally
+            // The map zoom is already disabled, this just ensures it stays that way
+            return false;
+          }
+        }, { passive: true, capture: true });
+        
+        // Prevent touch zoom when map is not focused
+        mapContainer.addEventListener('touchmove', function(e) {
+          if (!mapFocused && !mapClicked && e.touches.length > 1) {
+            // Prevent pinch zoom when map is not clicked
+            e.preventDefault();
+            return false;
+          }
+        }, { passive: false });
+        
+        // Additional safety: periodically check and disable if needed
+        setInterval(function() {
+          if (!mapFocused && !mapClicked) {
+            if (map.scrollWheelZoom.enabled()) {
+              map.scrollWheelZoom.disable();
+            }
+            if (map.touchZoom && map.touchZoom.enabled()) {
+              map.touchZoom.disable();
+            }
+          }
+        }, 500);
+      }
 
       // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1762,6 +1896,48 @@
             if (!res.ok) throw new Error('Submission failed');
             return res.json();
           }).then(function() {
+            // Add review to the location's reviews array
+            var locationName = formData.get('location_name');
+            var locationAddress = formData.get('location_address');
+            var reviewerName = formData.get('reviewer_name');
+            var rating = parseInt(formData.get('rating'));
+            var reviewText = formData.get('review_text');
+            
+            // Find the location in DATA.bangaloreLocations
+            var location = DATA.bangaloreLocations.find(function(loc) {
+              return loc.name === locationName && loc.address === locationAddress;
+            });
+            
+            if (location) {
+              // Add the new review to the location's reviews array
+              var newReview = {
+                author: reviewerName,
+                rating: rating,
+                text: reviewText
+              };
+              
+              // Initialize reviews array if it doesn't exist
+              if (!location.reviews) {
+                location.reviews = [];
+              }
+              
+              // Add the new review
+              location.reviews.push(newReview);
+              
+              // Update currentLocationData if it's the same location
+              if (currentLocationData && 
+                  currentLocationData.name === locationName && 
+                  currentLocationData.address === locationAddress) {
+                currentLocationData.reviews = location.reviews;
+                
+                // Refresh the modal display if it's currently open
+                var locationModal = document.getElementById('location-modal');
+                if (locationModal && locationModal.classList.contains('show')) {
+                  showLocationModal(currentLocationData);
+                }
+              }
+            }
+            
             if (reviewStatus) {
               reviewStatus.textContent = 'Thank you! Your review has been submitted successfully.';
               reviewStatus.className = 'mb-4 text-sm text-green-600';
@@ -1827,46 +2003,104 @@
       if (window.AOS) {
         AOS.init({ once: true });
       }
-      // Enhance contact form: AJAX submit to FormSubmit
+      // Contact form submission handler
+      // Supports both FormSubmit (current) and Google Forms
       var form = document.getElementById('contact-form');
       var submitBtn = document.getElementById('contact-submit');
       var statusEl = document.getElementById('contact-status');
       var thanksEl = document.getElementById('thanks');
+      
       function setStatus(msg, ok) {
         if (!statusEl) return;
         statusEl.textContent = msg || '';
         statusEl.className = 'sm:col-span-2 text-sm mt-1 ' + (ok ? 'text-green-700' : 'text-red-600');
       }
+      
       if (form) {
         form.addEventListener('submit', function(e) {
           e.preventDefault();
           setStatus('', true);
+          
           if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
             submitBtn.textContent = 'Submitting...';
           }
+          
+          var formAction = form.getAttribute('action');
           var fd = new FormData(form);
-          // FormSubmit AJAX endpoint
-          fetch('https://formsubmit.co/ajax/info@matrixabacus.com', {
-            method: 'POST',
-            body: fd
-          }).then(function(res) {
-            if (!res.ok) throw new Error('Submission failed');
-            return res.json();
-          }).then(function() {
-            setStatus('Thanks! We have received your details.', true);
-            if (thanksEl) thanksEl.classList.remove('hidden');
-            form.reset();
-          }).catch(function() {
-            setStatus('Something went wrong. Please try again or use email/phone.', false);
-          }).finally(function() {
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-              submitBtn.textContent = 'Submit';
+          
+          // Check if using Google Forms
+          if (formAction && formAction.indexOf('docs.google.com/forms') !== -1) {
+            // Google Forms submission
+            // Note: Google Forms requires specific field name mapping
+            // You need to get the entry IDs from your Google Form HTML
+            // Example: entry.123456789 for field 1, entry.987654321 for field 2, etc.
+            
+            // Convert FormData to URL-encoded format for Google Forms
+            var params = new URLSearchParams();
+            // Map your form fields to Google Form entry IDs
+            // Replace these entry IDs with your actual Google Form entry IDs
+            if (fd.get('parent_name')) params.append('entry.123456789', fd.get('parent_name')); // Replace with actual entry ID
+            if (fd.get('email')) params.append('entry.987654321', fd.get('email')); // Replace with actual entry ID
+            if (fd.get('mobile')) params.append('entry.111222333', fd.get('mobile')); // Replace with actual entry ID
+            if (fd.get('child_name')) params.append('entry.444555666', fd.get('child_name')); // Replace with actual entry ID
+            if (fd.get('child_class')) params.append('entry.777888999', fd.get('child_class')); // Replace with actual entry ID
+            
+            // Submit to Google Forms
+            fetch(formAction, {
+              method: 'POST',
+              mode: 'no-cors', // Google Forms requires no-cors mode
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: params.toString()
+            }).then(function() {
+              // With no-cors, we can't read the response, so assume success
+              setStatus('Thanks! Your form has been submitted successfully.', true);
+              if (thanksEl) thanksEl.classList.remove('hidden');
+              form.reset();
+              // Redirect to thank you page if needed
+              // window.location.href = 'index.html#thanks';
+            }).catch(function() {
+              setStatus('Form submitted. If you see this, submission may have succeeded.', true);
+              if (thanksEl) thanksEl.classList.remove('hidden');
+              form.reset();
+            }).finally(function() {
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+                submitBtn.textContent = 'Submit';
+              }
+            });
+          } else {
+            // FormSubmit submission (current default) - Sends directly to email
+            // Set reply-to email for easy response
+            var userEmail = fd.get('email');
+            if (userEmail) {
+              fd.append('_replyto', userEmail);
             }
-          });
+            
+            fetch('https://formsubmit.co/ajax/info@matrixabacus.com', {
+              method: 'POST',
+              body: fd
+            }).then(function(res) {
+              if (!res.ok) throw new Error('Submission failed');
+              return res.json();
+            }).then(function() {
+              setStatus('Thanks! We have received your details. We will contact you via email shortly.', true);
+              if (thanksEl) thanksEl.classList.remove('hidden');
+              form.reset();
+            }).catch(function() {
+              setStatus('Something went wrong. Please try again or contact us directly at info@matrixabacus.com', false);
+            }).finally(function() {
+              if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+                submitBtn.textContent = 'Submit';
+              }
+            });
+          }
         });
       }
     });
