@@ -1,0 +1,14 @@
+{
+  "reviews": [
+    {
+      "id": "1765812771408",
+      "locationName": "Matrix Abacus - Yelahanka",
+      "locationAddress": "6th Main, Dwaraka Nagar, 14, Vidya Deep, next to SBI Bank, Vijaynagar, Yelahanka, Bengaluru, Karnataka 560064",
+      "author": "Shriprasad",
+      "email": "shriprasadpatil005@gmail.com",
+      "rating": 5,
+      "text": "Amazing ",
+      "createdAt": "2025-12-15T15:32:51.408Z"
+    }
+  ]
+}
