@@ -1,54 +1,177 @@
 {
   "featuredVideoId": "sUjXo2W6o0c",
   "standardExams": [
-    { "label": "Class 1", "href": "pdfs/class1-exam.pdf", "driveId": "" },
-    { "label": "Class 2", "href": "pdfs/class2-exam.pdf", "driveId": "" },
-    { "label": "Class 3", "href": "pdfs/class3-exam.pdf", "driveId": "" },
-    { "label": "Class 4", "href": "pdfs/class4-exam.pdf", "driveId": "" },
-    { "label": "Class 5", "href": "pdfs/class5-exam.pdf", "driveId": "" },
-    { "label": "Class 6", "href": "pdfs/class6-exam.pdf", "driveId": "" },
-    { "label": "Class 7", "href": "pdfs/class7-exam.pdf", "driveId": "" },
-    { "label": "Class 8", "href": "pdfs/class8-exam.pdf", "driveId": "" }
+    {
+      "label": "Class 1",
+      "href": "pdfs/class1-exam.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Class 2",
+      "href": "pdfs/class2-exam.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Class 3",
+      "href": "pdfs/class3-exam.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Class 4",
+      "href": "pdfs/class4-exam.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Class 5",
+      "href": "pdfs/class5-exam.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Class 6",
+      "href": "pdfs/class6-exam.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Class 7",
+      "href": "pdfs/class7-exam.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Class 8",
+      "href": "pdfs/class8-exam.pdf",
+      "driveId": ""
+    }
   ],
   "levelWorksheets": [
-    { "label": "Prodigy", "href": "pdfs/prodigy.pdf", "driveId": "" },
-    { "label": "Level 1", "href": "pdfs/level1.pdf", "driveId": "" },
-    { "label": "Level 2", "href": "pdfs/level2.pdf", "driveId": "" },
-    { "label": "Level 3", "href": "pdfs/level3.pdf", "driveId": "" },
-    { "label": "Level 4", "href": "pdfs/level4.pdf", "driveId": "" },
-    { "label": "Level 5", "href": "pdfs/level5.pdf", "driveId": "" },
-    { "label": "Level 6", "href": "pdfs/level6.pdf", "driveId": "" },
-    { "label": "Level 7", "href": "pdfs/level7.pdf", "driveId": "" },
-    { "label": "Level 8", "href": "pdfs/level8.pdf", "driveId": "" },
-    { "label": "Level 9", "href": "pdfs/level9.pdf", "driveId": "" },
-    { "label": "Level 10", "href": "pdfs/level10.pdf", "driveId": "" }
+    {
+      "label": "Prodigy",
+      "href": "pdfs/prodigy.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Level 1",
+      "href": "pdfs/level1.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Level 2",
+      "href": "pdfs/level2.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Level 3",
+      "href": "pdfs/level3.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Level 4",
+      "href": "pdfs/level4.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Level 5",
+      "href": "pdfs/level5.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Level 6",
+      "href": "pdfs/level6.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Level 7",
+      "href": "pdfs/level7.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Level 8",
+      "href": "pdfs/level8.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Level 9",
+      "href": "pdfs/level9.pdf",
+      "driveId": ""
+    },
+    {
+      "label": "Level 10",
+      "href": "pdfs/level10.pdf",
+      "driveId": ""
+    }
   ],
   "results": [
-    { "label": "Student Results", "href": "pdfs/student-results.pdf", "driveId": "" }
+    {
+      "label": "Student Results",
+      "href": "pdfs/student-results.pdf",
+      "driveId": ""
+    }
   ],
   "galleryImages": [
-    { "href": "images/gallery1.png", "driveId": "" },
-    { "href": "images/gallery2.png", "driveId": "" },
-    { "href": "images/gallery3.png", "driveId": "" },
-    { "href": "images/gallery4.png", "driveId": "" },
-    { "href": "images/gallery5.png", "driveId": "" },
-    { "href": "images/gallery6.png", "driveId": "" }
+    {
+      "href": "images/gallery1.png",
+      "driveId": ""
+    },
+    {
+      "href": "images/gallery2.png",
+      "driveId": ""
+    },
+    {
+      "href": "images/gallery3.png",
+      "driveId": ""
+    },
+    {
+      "href": "images/gallery4.png",
+      "driveId": ""
+    },
+    {
+      "href": "images/gallery5.png",
+      "driveId": ""
+    },
+    {
+      "href": "images/gallery6.png",
+      "driveId": ""
+    }
   ],
   "faqs": [
-    { "q": "What age group can enroll in Matrix Abacus?", "a": "Our program is designed for children between 6 and 12 years of age." },
-    { "q": "Do you offer online classes?", "a": "Yes, we offer both online and offline classes to suit your convenience." },
-    { "q": "How long does it take to complete a module?", "a": "Each module typically takes a few months to complete, depending on the child’s pace and proficiency." },
-    { "q": "Can parents track their child's progress?", "a": "Yes, we provide regular assessments and feedback to keep parents informed about their child’s progress." }
+    {
+      "q": "What age group can enroll in Matrix Abacus?",
+      "a": "Our program is designed for children between 6 and 12 years of age."
+    },
+    {
+      "q": "Do you offer online classes?",
+      "a": "Yes, we offer both online and offline classes to suit your convenience."
+    },
+    {
+      "q": "How long does it take to complete a module?",
+      "a": "Each module typically takes a few months to complete, depending on the child’s pace and proficiency."
+    },
+    {
+      "q": "Can parents track their child's progress?",
+      "a": "Yes, we provide regular assessments and feedback to keep parents informed about their child’s progress."
+    }
   ],
   "hero": {
     "title": "Unlock Your Child's Mathematical Potential",
     "subtitle": "Transform your child’s relationship with numbers through our proven abacus and mental math training program",
-    "primaryCta": { "label": "Start Free Trial", "href": "#trial" },
-    "secondaryCta": { "label": "Learn More", "href": "#about" }
+    "primaryCta": {
+      "label": "View Results",
+      "href": "pdfs/student-results.pdf",
+      "target": "_blank"
+    },
+    "secondaryCta": {
+      "label": "Learn More",
+      "href": "#about"
+    }
   },
   "aboutStats": [
-    { "heading": "30+ Centres", "text": "Spread across multiple cities to serve your child better." },
-    { "heading": "1,000+ Students", "text": "Join thousands of children who have benefited from our program." }
+    {
+      "heading": "30+ Centres",
+      "text": "Spread across multiple cities to serve your child better."
+    },
+    {
+      "heading": "1,000+ Students",
+      "text": "Join thousands of children who have benefited from our program."
+    }
   ],
   "mapQuery": "Matrix Abacus",
   "social": {

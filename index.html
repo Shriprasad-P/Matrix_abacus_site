@@ -329,10 +329,10 @@
         <p id="hero-subtitle" class="text-lg mb-8 max-w-md md:max-w-none mx-auto md:mx-0 text-gray-600">Transform your
           child’s relationship with numbers through our proven abacus and mental math training program</p>
         <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 justify-center md:justify-start">
-          <!-- Primary CTA now uses a deep blue gradient for a strong call‑to‑action -->
-          <a id="hero-cta-primary" href="#contact"
-            class="inline-block text-white px-8 py-3 rounded-md bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 transition-transform transform hover:scale-105 shadow-lg">Start
-            Free Trial</a>
+          <!-- Primary CTA - View Results -->
+          <a id="hero-cta-primary" href="pdfs/student-results.pdf" target="_blank" rel="noopener"
+            class="inline-block text-white px-8 py-3 rounded-md bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 transition-transform transform hover:scale-105 shadow-lg">View
+            Results</a>
           <!-- Secondary CTA retains a light appearance but with a slight blue tint for cohesion -->
           <a id="hero-cta-secondary" href="#about"
             class="inline-block bg-white/80 border border-blue-200 text-gray-800 px-8 py-3 rounded-md hover:bg-white shadow-md transition-transform transform hover:scale-105">Learn
@@ -858,7 +858,7 @@
       hero: {
         title: "Unlock Your Child's Mathematical Potential",
         subtitle: "Transform your child’s relationship with numbers through our proven abacus and mental math training program",
-        primaryCta: { label: "Start Free Trial", href: "#contact" },
+        primaryCta: { label: "View Results", href: "pdfs/student-results.pdf", target: "_blank" },
         secondaryCta: { label: "Learn More", href: "#about" },
         image: { href: 'images/gallery1.png' }
       },
@@ -1437,6 +1437,10 @@
           if (heroCtaPrimary && DATA.hero.primaryCta) {
             heroCtaPrimary.textContent = DATA.hero.primaryCta.label || heroCtaPrimary.textContent;
             heroCtaPrimary.href = DATA.hero.primaryCta.href || heroCtaPrimary.href;
+            if (DATA.hero.primaryCta.target) {
+              heroCtaPrimary.target = DATA.hero.primaryCta.target;
+              heroCtaPrimary.rel = "noopener";
+            }
           }
           if (heroCtaSecondary && DATA.hero.secondaryCta) {
             heroCtaSecondary.textContent = DATA.hero.secondaryCta.label || heroCtaSecondary.textContent;
