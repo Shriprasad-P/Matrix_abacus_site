@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <title>Gallery - Matrix Abacus</title>
+    <meta name="description" content="Explore our gallery of Matrix Abacus students, events, and achievements." />
+    <meta name="keywords" content="Matrix Abacus, gallery, abacus students, events, achievements" />
+    <link rel="icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <!-- Tailwind CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- AOS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .nav-glass {
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            background-color: rgba(255, 255, 255, 0.75);
+        }
+
+        @supports not (backdrop-filter: blur(12px)) {
+            .nav-glass {
+                background-color: rgba(255, 255, 255, 0.95);
+            }
+        }
+
+        .gallery-item {
+            overflow: hidden;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .gallery-item img {
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Lightbox */
+        #lightbox.show {
+            display: flex !important;
+        }
+
+        #lightbox-prev:hover,
+        #lightbox-next:hover,
+        #lightbox-close:hover {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+
+<body class="font-sans text-gray-800 bg-blue-50 min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="text-gray-800 px-4 py-3 sticky top-0 z-50 shadow-lg nav-glass border-b border-blue-100">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="flex items-center space-x-3">
+                <img src="Matrix Academy Abacus.png" alt="Matrix Abacus Logo" class="h-10">
+                <span class="text-2xl font-bold">Matrix Abacus</span>
+            </a>
+            <a href="index.html"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Home
+            </a>
+        </div>
+    </nav>
+
+    <!-- Gallery Header -->
+    <section class="py-12 px-6 text-center bg-gradient-to-br from-blue-50 to-blue-200" data-aos="fade-up">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-800">Our Gallery</h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            Explore moments from our classes, events, competitions, and student achievements.
+        </p>
+    </section>
+
+    <!-- Full Gallery -->
+    <section class="py-12 px-6" data-aos="fade-up">
+        <div id="full-gallery-grid"
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            <!-- Gallery images will be loaded dynamically -->
+        </div>
+    </section>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="fixed inset-0 bg-black bg-opacity-90 hidden items-center justify-center z-50">
+        <button id="lightbox-close" aria-label="Close" class="absolute top-4 right-4 text-white text-3xl">×</button>
+        <button id="lightbox-prev" aria-label="Previous"
+            class="absolute left-4 md:left-8 text-white text-3xl">‹</button>
+        <img id="lightbox-image" src="" alt="Gallery item" class="max-h-[85vh] max-w-[90vw] rounded shadow-lg">
+        <button id="lightbox-next" aria-label="Next" class="absolute right-4 md:right-8 text-white text-3xl">›</button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-white text-center py-8 bg-gradient-to-r from-blue-700 to-green-600 mt-12">
+        <div class="max-w-6xl mx-auto">
+            <p class="font-bold mb-2">Matrix Abacus</p>
+            <p class="text-sm opacity-90">© 2024 Matrix Abacus. All rights reserved.</p>
+            <a href="index.html" class="inline-block mt-4 text-white underline hover:no-underline">← Back to Home</a>
+        </div>
+    </footer>
+
+    <!-- AOS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true });
+
+        // Gallery images - dynamically load all available images
+        const galleryImages = [
+            { src: 'images/gallery1.png', alt: 'Gallery Image 1' },
+            { src: 'images/gallery2.png', alt: 'Gallery Image 2' },
+            { src: 'images/gallery3.png', alt: 'Gallery Image 3' },
+            { src: 'images/gallery4.png', alt: 'Gallery Image 4' },
+            { src: 'images/gallery5.png', alt: 'Gallery Image 5' },
+            { src: 'images/gallery6.png', alt: 'Gallery Image 6' }
+        ];
+
+        const galleryGrid = document.getElementById('full-gallery-grid');
+        let currentIndex = 0;
+
+        // Render all gallery images
+        galleryImages.forEach((img, index) => {
+            const item = document.createElement('div');
+            item.className = 'gallery-item cursor-pointer';
+            item.innerHTML = `<img src="${img.src}" alt="${img.alt}" class="w-full h-64 object-cover" loading="lazy">`;
+            item.addEventListener('click', () => openLightbox(index));
+            galleryGrid.appendChild(item);
+        });
+
+        // Lightbox functionality
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImage = document.getElementById('lightbox-image');
+
+        function openLightbox(index) {
+            currentIndex = index;
+            lightboxImage.src = galleryImages[currentIndex].src;
+            lightboxImage.alt = galleryImages[currentIndex].alt;
+            lightbox.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function navigate(direction) {
+            currentIndex = (currentIndex + direction + galleryImages.length) % galleryImages.length;
+            lightboxImage.src = galleryImages[currentIndex].src;
+            lightboxImage.alt = galleryImages[currentIndex].alt;
+        }
+
+        document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+        document.getElementById('lightbox-prev').addEventListener('click', () => navigate(-1));
+        document.getElementById('lightbox-next').addEventListener('click', () => navigate(1));
+
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) closeLightbox();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (!lightbox.classList.contains('show')) return;
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') navigate(-1);
+            if (e.key === 'ArrowRight') navigate(1);
+        });
+    </script>
+
+</body>
+
+</html>

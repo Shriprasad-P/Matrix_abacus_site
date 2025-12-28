@@ -108,27 +108,43 @@
   ],
   "galleryImages": [
     {
-      "href": "images/gallery1.png",
+      "href": "images/gallery1.jpg",
       "driveId": ""
     },
     {
-      "href": "images/gallery2.png",
+      "href": "images/gallery2.jpg",
       "driveId": ""
     },
     {
-      "href": "images/gallery3.png",
+      "href": "images/gallery3.jpg",
       "driveId": ""
     },
     {
-      "href": "images/gallery4.png",
+      "href": "images/gallery4.jpg",
       "driveId": ""
     },
     {
-      "href": "images/gallery5.png",
+      "href": "images/gallery5.jpg",
       "driveId": ""
     },
     {
-      "href": "images/gallery6.png",
+      "href": "images/gallery6.jpg",
+      "driveId": ""
+    },
+    {
+      "href": "images/gallery7.jpg",
+      "driveId": ""
+    },
+    {
+      "href": "images/gallery8.jpg",
+      "driveId": ""
+    },
+    {
+      "href": "images/gallery9.jpg",
+      "driveId": ""
+    },
+    {
+      "href": "images/gallery10.jpg",
       "driveId": ""
     }
   ],

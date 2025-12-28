@@ -376,7 +376,7 @@
       </div>
       <!-- Decorative image -->
       <div class="w-full md:w-1/2">
-        <img id="hero-image" src="images/gallery1.png" alt="Child playing with abacus"
+        <img id="hero-image" src="images/hero-abacus.jpg" alt="Colorful abacus illustration"
           class="rounded-xl shadow-2xl w-full h-64 md:h-96 object-cover" loading="lazy">
       </div>
     </div>
@@ -1328,7 +1328,7 @@
         var loadMoreBtn = document.getElementById('gallery-load-more');
         var showAllBtn = document.getElementById('gallery-show-all');
         if (gallery) {
-          var PAGE_SIZE = 6;
+          var PAGE_SIZE = 9;
           if (!renderFromData._galleryIndex) renderFromData._galleryIndex = 0;
           function renderChunk() {
             if (!Array.isArray(DATA.galleryImages)) return;
