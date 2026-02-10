@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const compression = require('compression');
 require('dotenv').config();
 
 const app = express();
@@ -46,8 +47,20 @@ initReviewsFile();
 
 // Middleware
 app.use(cors());
+app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from the parent directory
+app.use(express.static(path.join(__dirname, '..'), {
+  maxAge: '1d', // Cache static assets for 1 day
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) {
+      // Don't cache HTML files to ensure updates are seen immediately
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
 
 // Create Nodemailer transporter
 const transporter = nodemailer.createTransport({

@@ -57,6 +57,12 @@
   <!-- Google Fonts for a modern look -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://unpkg.com">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!-- AOS (Animate On Scroll) library for subtle animations -->
@@ -373,14 +379,16 @@
     <div class="max-w-6xl mx-auto flex flex-col-reverse md:flex-row items-center gap-12 px-6" data-aos="fade-up">
       <!-- Textual content -->
       <div class="w-full md:w-1/2 text-center md:text-left">
-        <h1 id="hero-title" data-aos="fade-up" data-aos-delay="100" class="text-4xl md:text-5xl font-bold mb-4 text-gray-800 leading-tight" data-aos="fade-up"
+        <h1 id="hero-title" data-aos="fade-up" data-aos-delay="100"
+          class="text-4xl md:text-5xl font-bold mb-4 text-gray-800 leading-tight" data-aos="fade-up"
           data-aos-delay="100">Unlock Your Child's
           Mathematical Potential</h1>
-        <p id="hero-subtitle" data-aos="fade-up" data-aos-delay="200" class="text-lg mb-8 max-w-md md:max-w-none mx-auto md:mx-0 text-gray-600"
-          data-aos="fade-up" data-aos-delay="200">Transform your
+        <p id="hero-subtitle" data-aos="fade-up" data-aos-delay="200"
+          class="text-lg mb-8 max-w-md md:max-w-none mx-auto md:mx-0 text-gray-600" data-aos="fade-up"
+          data-aos-delay="200">Transform your
           child’s relationship with numbers through our proven abacus and mental math training program</p>
-        <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 justify-center md:justify-start" data-aos="fade-up" data-aos-delay="300"
-          data-aos="fade-up" data-aos-delay="300">
+        <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 justify-center md:justify-start"
+          data-aos="fade-up" data-aos-delay="300" data-aos="fade-up" data-aos-delay="300">
           <!-- Primary CTA - View Results -->
           <a id="hero-cta-primary" href="pdfs/student-results.pdf" target="_blank" rel="noopener"
             class="inline-block text-white px-8 py-3 rounded-md bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 transition-transform transform hover:scale-105 shadow-lg btn-hover">View
@@ -392,8 +400,8 @@
         </div>
 
         <!-- Social media icons in hero -->
-        <div class="mt-8 flex items-center justify-center md:justify-start space-x-4" data-aos="fade-in" data-aos-delay="400" data-aos="fade-in"
-          data-aos-delay="400">
+        <div class="mt-8 flex items-center justify-center md:justify-start space-x-4" data-aos="fade-in"
+          data-aos-delay="400" data-aos="fade-in" data-aos-delay="400">
           <a href="https://www.facebook.com/matrixabacus/" target="_blank" rel="noopener" aria-label="Facebook"
             class="p-2 rounded-full bg-white/80 hover:bg-white shadow-sm hover-lift">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#1877F2" class="w-6 h-6">
@@ -430,7 +438,7 @@
       <!-- Decorative image -->
       <div class="w-full md:w-1/2" data-aos="zoom-in" data-aos-delay="200" data-aos="zoom-in" data-aos-delay="200">
         <img id="hero-image" src="images/hero-abacus.jpg" alt="Colorful abacus illustration"
-          class="rounded-xl shadow-2xl w-full h-64 md:h-96 object-cover" loading="lazy">
+          class="rounded-xl shadow-2xl w-full h-64 md:h-96 object-cover" fetchpriority="high">
       </div>
     </div>
   </section>
