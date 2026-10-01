@@ -360,6 +360,7 @@
             class="absolute left-0 top-full mt-0 bg-white text-black rounded-md shadow-lg dropdown-menu"></ul>
         </li>
         <li><a href="#gallery" class="hover:underline">Gallery</a></li>
+        <li class="drive-downloads-link hidden"><a href="#downloads" class="hover:underline">Downloads</a></li>
         <!-- More dropdown -->
       </ul>
     </div>
@@ -551,6 +552,12 @@
       <button id="gallery-load-more" class="px-6 py-3 bg-white border rounded-md hover:bg-gray-100">Load more</button>
       <button id="gallery-show-all" class="px-6 py-3 bg-white border rounded-md hover:bg-gray-100">Show all</button>
     </div>
+  </section>
+
+  <section id="downloads" class="py-16 px-6 bg-white text-center hidden">
+    <h2 class="text-3xl font-bold mb-4">Downloads</h2>
+    <p class="text-gray-600 mb-8">Worksheets, results and other public PDFs</p>
+    <ul id="drive-downloads" class="max-w-3xl mx-auto grid gap-3 text-left"></ul>
   </section>
 
   <!-- Lightbox Modal -->
@@ -849,6 +856,7 @@
           <li><a href="#why" class="hover:underline">Why Matrix Abacus?</a></li>
           <li><a href="#about" class="hover:underline">About Us</a></li>
           <li><a href="#gallery" class="hover:underline">Gallery</a></li>
+          <li class="drive-downloads-link hidden"><a href="#downloads" class="hover:underline">Downloads</a></li>
         </ul>
       </div>
       <div>
@@ -1369,10 +1377,17 @@
         function populateMenu(containerId, items) {
           var container = document.getElementById(containerId);
           if (!container || !Array.isArray(items)) return;
-          container.innerHTML = items.map(function (item) {
-            var url = resolveUrl(item, 'download');
-            return '<li><a href="' + url + '" download class="block px-4 py-2 hover:bg-gray-200">' + item.label.replace(/\s/g, '&nbsp;') + '</a></li>';
-          }).join('');
+          container.replaceChildren();
+          items.forEach(function (item) {
+            var li = document.createElement('li');
+            var a = document.createElement('a');
+            a.href = resolveUrl(item, 'download');
+            a.download = '';
+            a.className = 'block px-4 py-2 hover:bg-gray-200';
+            a.textContent = item.label;
+            li.appendChild(a);
+            container.appendChild(li);
+          });
         }
 
         populateMenu('level-menu', DATA.levelWorksheets);
@@ -1612,7 +1627,46 @@
           window.DATA = Object.assign({}, window.DATA, remote);
           renderFromData();
         }
-      }).catch(function () { /* optional: ignore if not present */ });
+      }).catch(function () { /* optional: ignore if not present */ }).then(function () {
+        return fetch('/api/media/manifest').then(function (res) {
+          if (!res.ok) throw new Error('Media manifest unavailable');
+          return res.json();
+        }).then(function (media) {
+          if (!media.ready) return;
+          if (media.images.length) DATA.galleryImages = media.images;
+          var pdfs = media.pdfs || [];
+          function key(value) { return value.toLowerCase().replace(/\.pdf$/i, '').replace(/[^a-z0-9]/g, ''); }
+          function updateLinks(items) {
+            items.forEach(function (item) {
+              var match = pdfs.find(function (pdf) { return key(pdf.name) === key(item.label); });
+              if (match) item.href = match.href;
+            });
+          }
+          updateLinks(DATA.levelWorksheets);
+          updateLinks(DATA.results);
+          updateLinks(DATA.standardExams);
+          var studentResults = pdfs.find(function (pdf) { return key(pdf.name) === 'studentresults'; });
+          if (studentResults) DATA.hero.primaryCta.href = studentResults.href;
+          var section = document.getElementById('downloads');
+          var list = document.getElementById('drive-downloads');
+          if (pdfs.length && section && list) {
+            section.classList.remove('hidden');
+            document.querySelectorAll('.drive-downloads-link').forEach(function (link) { link.classList.remove('hidden'); });
+            list.replaceChildren();
+            pdfs.forEach(function (pdf) {
+              var li = document.createElement('li');
+              var a = document.createElement('a');
+              a.href = pdf.href;
+              a.download = '';
+              a.className = 'block bg-blue-50 rounded-lg px-5 py-4 text-blue-800 hover:bg-blue-100';
+              a.textContent = pdf.name;
+              li.appendChild(a);
+              list.appendChild(li);
+            });
+          }
+          renderFromData();
+        });
+      }).catch(function () { /* existing content remains visible */ });
       if (featured) {
         featured.addEventListener('click', function () {
           var iframe = document.createElement('iframe');
