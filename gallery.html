@@ -128,27 +128,36 @@
     <script>
         AOS.init({ duration: 800, once: true });
 
-        // Gallery images - dynamically load all available images
-        const galleryImages = [
-            { src: 'images/gallery1.png', alt: 'Gallery Image 1' },
-            { src: 'images/gallery2.png', alt: 'Gallery Image 2' },
-            { src: 'images/gallery3.png', alt: 'Gallery Image 3' },
-            { src: 'images/gallery4.png', alt: 'Gallery Image 4' },
-            { src: 'images/gallery5.png', alt: 'Gallery Image 5' },
-            { src: 'images/gallery6.png', alt: 'Gallery Image 6' }
-        ];
-
+        let galleryImages = [];
         const galleryGrid = document.getElementById('full-gallery-grid');
         let currentIndex = 0;
 
-        // Render all gallery images
-        galleryImages.forEach((img, index) => {
-            const item = document.createElement('div');
-            item.className = 'gallery-item cursor-pointer';
-            item.innerHTML = `<img src="${img.src}" alt="${img.alt}" class="w-full h-64 object-cover" loading="lazy">`;
-            item.addEventListener('click', () => openLightbox(index));
-            galleryGrid.appendChild(item);
-        });
+        function renderImages(images) {
+            galleryImages = images.map((img, index) => ({
+                src: typeof img === 'string' ? img : img.href,
+                alt: (typeof img === 'string' ? '' : img.name) || `Gallery image ${index + 1}`
+            }));
+            galleryGrid.replaceChildren();
+            galleryImages.forEach((img, index) => {
+                const item = document.createElement('div');
+                const image = document.createElement('img');
+                item.className = 'gallery-item cursor-pointer';
+                image.src = img.src;
+                image.alt = img.alt;
+                image.className = 'w-full h-64 object-cover';
+                image.loading = 'lazy';
+                item.appendChild(image);
+                item.addEventListener('click', () => openLightbox(index));
+                galleryGrid.appendChild(item);
+            });
+        }
+        fetch('content.json').then(response => response.json()).then(content => {
+            renderImages(content.galleryImages || []);
+        }).catch(() => {}).then(() => {
+            return fetch('/api/media/manifest').then(response => response.json()).then(media => {
+                if (media.ready && media.images.length) renderImages(media.images);
+            });
+        }).catch(() => {});
 
         // Lightbox functionality
         const lightbox = document.getElementById('lightbox');

@@ -1,0 +1,6 @@
+[build]
+  command = "mkdir -p dist && cp index.html gallery.html content.json 'Matrix Academy Abacus.png' dist/ && cp -R images pdfs dist/"
+  publish = "dist"
+
+[functions]
+  node_bundler = "esbuild"
