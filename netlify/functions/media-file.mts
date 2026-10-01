@@ -1,5 +1,5 @@
 import type { Config, Context } from '@netlify/functions';
-import { configured, driveToken, mediaStore } from './media-lib.mts';
+import { configured, driveToken, mediaStore } from './_shared/media-lib.mts';
 
 export default async (_request: Request, context: Context) => {
   if (!configured()) return new Response('Not found', { status: 404 });

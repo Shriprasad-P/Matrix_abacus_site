@@ -1,5 +1,5 @@
 import type { Config } from '@netlify/functions';
-import { configured, mediaStore } from './media-lib.mts';
+import { configured, mediaStore } from './_shared/media-lib.mts';
 
 export default async () => {
   if (!configured()) return Response.json({ ready: false, images: [], pdfs: [] });

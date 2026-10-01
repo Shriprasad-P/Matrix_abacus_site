@@ -1,6 +1,6 @@
 import type { Config } from '@netlify/functions';
-import { configured, listDriveFiles, mediaStore } from './media-lib.mts';
-import { updateMediaState } from './media-state.mjs';
+import { configured, listDriveFiles, mediaStore } from './_shared/media-lib.mts';
+import { updateMediaState } from './_shared/media-state.mjs';
 
 export default async () => {
   if (!configured()) {

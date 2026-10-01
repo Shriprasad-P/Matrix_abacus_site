@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { updateMediaState } from './media-state.mjs';
+import { updateMediaState } from '../netlify/functions/_shared/media-state.mjs';
 
 test('releases six images weekly while refreshing PDFs and retaining a large queue', () => {
   const files = Array.from({ length: 500 }, (_, i) => ({
