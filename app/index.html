@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Matrix Abacus</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="shell" inert>
+    <aside class="sidebar">
+      <div class="brand"><img class="brand-logo" src="./matrix-abacus-logo.png" alt="Matrix Abacus — For Intellectual Excellence"></div>
+      <nav aria-label="Main navigation">
+        <button class="nav admin-nav active" data-view="dashboard"><span>◫</span> Overview</button>
+        <button class="nav admin-nav" data-view="students"><span>♧</span> Students</button>
+        <button class="nav admin-nav" data-view="progress"><span>▰</span> Reviews</button>
+        <button class="nav admin-nav" data-view="admin-worksheets"><span>▤</span> Worksheets</button>
+        <button class="nav admin-nav" data-view="admin-fees"><span>₹</span> Payments</button>
+        <button class="nav student-nav hidden" data-view="student-home"><span>⌂</span> My home</button>
+        <button class="nav student-nav hidden" data-view="practice"><span>▦</span> Abacus Lab</button>
+        <button class="nav student-nav hidden" data-view="student-worksheets"><span>▤</span> Worksheets</button>
+        <button class="nav student-nav hidden" data-view="my-progress"><span>◉</span> Profile</button>
+        <button class="nav student-nav hidden" data-view="student-fees"><span>₹</span> Payments</button>
+      </nav>
+      <button id="switch-portal" class="switch-portal">↪ Sign out</button>
+      <div class="sidebar-bottom"><div class="help-icon">✦</div><strong>Make every number count.</strong><p>A joyful place to learn, practice, and grow.</p></div>
+    </aside>
+    <main>
+      <header class="topbar"><span id="breadcrumb">Overview</span><span class="today" id="today"></span><span class="avatar">AI</span></header>
+      <section class="view" id="dashboard-view">
+        <div class="eyebrow">YOUR LEARNING SPACE</div>
+        <div class="heading-row"><div><h1>Good to see you 👋</h1><p class="subtitle">Here’s what’s happening at your institute today.</p></div><button class="primary" id="dashboard-add">+ Add student</button></div>
+        <div class="stats"><article class="stat"><span>Active students</span><strong id="student-count">0</strong><small>Enrolled in your institute</small></article><article class="stat"><span>Reviews waiting</span><strong id="pending-review-count">0</strong><small>Practice and worksheet results</small></article><article class="stat"><span>Fees to follow up</span><strong id="fee-followup-count">0</strong><small>Unpaid or awaiting verification</small></article></div>
+        <div class="dashboard-actions"><button class="secondary" id="hero-practice">Review learning →</button><button class="secondary" id="dashboard-payments">Check payments →</button></div>
+        <div class="section-head"><div><h2>Recent students</h2><p>Latest additions to your classroom</p></div><button class="link" id="view-all">View all →</button></div>
+        <div id="recent-students" class="recent-list"></div>
+      </section>
+      <section class="view hidden" id="students-view">
+        <div class="eyebrow">STUDENT MANAGEMENT</div>
+        <div class="heading-row"><div><h1>Your students</h1><p class="subtitle">Keep your classroom details in one place.</p></div><div class="schedule-actions"><button class="secondary" id="admin-open-schedule">Class schedule</button><button class="primary" id="students-add">+ Add student</button></div></div>
+        <div class="panel"><div class="panel-head"><h2>Student directory</h2><label class="search"><span>⌕</span><input id="student-search" placeholder="Search students" aria-label="Search students"></label></div><label class="archive-toggle"><input id="show-archived" type="checkbox"> Show archived students</label><div class="table-wrap"><table><thead><tr><th>STUDENT</th><th>AGE</th><th>LEVEL</th><th>GUARDIAN</th><th>CONTACT</th><th>PROGRESS</th><th></th></tr></thead><tbody id="student-rows"></tbody></table></div><p id="student-empty" class="empty hidden">No students yet. Add your first student to get started.</p></div>
+      </section>
+      <section class="view hidden" id="admin-schedule-view">
+        <div class="eyebrow">CLASS PLANNING</div><h1>Class schedule</h1><p class="subtitle">Offer weekly class times. Students choose two on different days.</p>
+        <form class="panel schedule-panel" id="schedule-settings-form">
+          <label class="schedule-toggle"><input id="schedule-enabled" type="checkbox"> Allow students to choose class times</label>
+          <h2>Available class times</h2><div id="schedule-slot-rows" class="schedule-slot-rows"></div>
+          <div class="schedule-actions"><button class="secondary" type="button" id="add-schedule-slot">+ Add class time</button><button class="primary" type="submit">Save availability</button></div>
+          <p id="schedule-settings-message" role="status"></p>
+        </form>
+        <div class="panel schedule-panel"><h2>Class rosters</h2><div id="admin-slot-rosters" class="session-list"></div><h2>Student choices</h2><div id="admin-schedule-list" class="session-list"></div></div>
+      </section>
+      <section class="view hidden" id="practice-view">
+        <div class="eyebrow">INTERACTIVE PRACTICE</div>
+        <div class="heading-row"><div><h1>Abacus Lab</h1><p class="subtitle">Move the beads toward the bar to make a number.</p></div><button class="secondary" id="reset-abacus">↺ Reset beads</button></div>
+        <div class="lab-grid"><div class="lab-card"><div class="lab-head"><div><h2>Try the soroban</h2><p>Each rod represents a place value.</p></div><span class="live-pill">● LIVE PRACTICE</span></div><div class="abacus" id="abacus" aria-label="Interactive four rod abacus"></div><div class="lab-footer"><span>UPPER BEAD = 5 &nbsp;·&nbsp; LOWER BEAD = 1</span><span>Click or use keyboard to move beads</span></div></div><div class="challenge-card"><span class="challenge-icon">✦</span><div class="eyebrow">PRACTICE CHALLENGE</div><h2>Can you show this number?</h2><p id="challenge-level" class="subtitle"></p><p id="challenge-hint" class="subtitle"></p><p id="challenge-mastery" class="subtitle"></p><p class="challenge-timer">Time left: <strong id="challenge-time" role="timer">—</strong></p><div class="target" id="target">0000</div><button class="primary full" id="check-answer" disabled>Check my answer</button><button class="secondary full" id="new-challenge">New challenge ↗</button><p id="feedback" role="status"></p><div class="reading"><span>Your abacus reads</span><strong id="abacus-value">0000</strong></div></div></div>
+      </section>
+      <section class="view hidden" id="progress-view">
+        <div class="eyebrow">ADMIN REVIEW</div>
+        <div class="heading-row"><div><h1>Learning reviews</h1><p class="subtitle">Review practice and worksheets in one place. Progress can move forward within a level.</p></div></div>
+        <div class="panel"><div class="panel-head"><h2>Practice sessions</h2><span class="pill" id="session-count">0 sessions</span></div><div id="session-list" class="session-list"></div><p id="session-empty" class="empty">No saved practice yet. A student's completed Abacus Lab challenge will appear here.</p></div>
+        <div class="panel review-panel"><div class="panel-head"><h2>Worksheet submissions</h2><span class="pill" id="worksheet-review-count">0 attempts</span></div><div id="admin-worksheet-results" class="session-list"></div></div>
+      </section>
+      <section class="view hidden" id="admin-worksheets-view">
+        <div class="eyebrow">WORKSHEET MANAGEMENT</div>
+        <div class="heading-row"><div><h1>Worksheets</h1><p class="subtitle">Assign number exercises to all students or a learning level.</p></div><button class="primary" id="create-worksheet">+ New worksheet</button></div>
+        <div class="section-head"><div><h2>Assigned worksheets</h2><p>Students see worksheets for their level.</p></div></div><div id="admin-worksheet-list" class="session-list"></div>
+      </section>
+      <section class="view hidden" id="student-worksheets-view">
+        <div class="eyebrow">NUMBER PRACTICE</div><h1>Worksheets</h1><p class="subtitle">Solve each question and submit it to your instructor.</p>
+        <div id="student-worksheet-list" class="session-list"></div>
+      </section>
+      <section class="view hidden" id="student-home-view">
+        <div class="eyebrow">STUDENT SPACE</div><h1 id="student-welcome">Welcome back!</h1><p class="subtitle">Keep practicing and watch your confidence grow.</p>
+        <div class="student-hero"><div><span class="hero-tag">YOUR NEXT STEP</span><h2 id="next-step-title">Ready for practice?</h2><p id="next-step-detail">Start with a challenge matched to your level.</p><button class="primary" id="student-start">Start practicing ↗</button></div><div class="student-hero-icon" aria-hidden="true">▦</div></div>
+        <button class="link" id="student-view-progress">View my profile →</button>
+        <div class="panel schedule-home"><h2>My weekly classes</h2><p id="schedule-home-summary">Your class times will appear here.</p><button class="link" id="student-open-schedule">Choose class times →</button></div>
+      </section>
+      <section class="view hidden" id="student-schedule-view">
+        <div class="eyebrow">WEEKLY CLASSES</div><h1>Choose your class times</h1><p class="subtitle">Pick two classes on different days each week.</p>
+        <div class="panel schedule-panel"><h2>My current schedule</h2><div id="student-schedule-current"></div></div>
+        <form class="panel schedule-panel" id="student-schedule-form"><h2>Available times</h2><p class="subtitle">Your instructor sets the times you can choose.</p><div id="student-schedule-options" class="schedule-options"></div><button class="primary" type="submit">Save my two classes</button><p id="student-schedule-message" role="status"></p></form>
+      </section>
+      <section class="view hidden" id="my-progress-view">
+        <div class="eyebrow">STUDENT PROFILE</div><h1 id="profile-name">My profile</h1><p class="subtitle" id="profile-level">Your learning journey</p>
+        <div class="student-summary-card"><div><span>Instructor assessment</span><strong id="my-progress-text">0%</strong></div><div><span>Current checkpoint</span><strong id="profile-checkpoint">Starting</strong></div><progress id="my-progress" max="100" value="0"></progress><small>Starting · Building · Practicing · Confident · Mastered. Your instructor advances this after a review.</small><small id="profile-mastery">Timed practice: 0 of 5 correct in a row.</small></div>
+        <div class="profile-metrics"><div><span>Accuracy this level</span><strong id="profile-accuracy">—</strong></div><div><span>Practice this level</span><strong id="profile-practice-count">0</strong></div><div><span>Worksheets completed</span><strong id="profile-worksheet-count">0</strong></div></div>
+        <h2>Practice history</h2><div id="my-session-list" class="session-list"></div><p id="my-session-empty" class="empty">No practice sessions yet. Try a challenge in Abacus Lab.</p>
+        <h2 class="profile-section-title">Worksheet results</h2><div id="profile-worksheet-results" class="session-list"></div>
+      </section>
+      <section class="view hidden" id="admin-fees-view">
+        <div class="eyebrow">FEE MANAGEMENT</div>
+        <div class="heading-row"><div><h1>Student payments</h1><p class="subtitle">One current fee for all students. Review transfer references before confirming payment.</p></div><button class="primary" id="set-fee">Set current fee</button></div>
+        <div class="fee-summary" id="admin-fee-summary"></div>
+        <div class="section-head"><div><h2>Payment status</h2><p>Student submissions appear here as pending.</p></div><button class="secondary" id="refresh-fees">Refresh</button></div>
+        <div id="admin-fee-list" class="session-list"></div>
+      </section>
+      <section class="view hidden" id="student-fees-view">
+        <div class="eyebrow">STUDENT PAYMENTS</div><h1>Fees & payments</h1><p class="subtitle">Pay through your UPI or bank app, then send the reference for admin verification.</p>
+        <div id="student-fee-current" class="fee-summary"></div>
+        <h2>Payment history</h2><div id="student-fee-history" class="session-list"></div>
+      </section>
+    </main>
+  </div>
+  <div id="portal-gate" class="portal-gate"><div class="portal-card"><div class="brand portal-brand"><img class="brand-logo" src="./matrix-abacus-logo.png" alt="Matrix Abacus — For Intellectual Excellence"></div><div class="eyebrow">ONE LEARNING SPACE</div><h1>Choose your portal</h1><p class="subtitle">Two focused experiences, one shared learning record.</p><details id="mobile-server-settings" class="portal-choice hidden"><summary>Institute connection</summary><form id="mobile-server-form"><label>Server URL<input id="mobile-server-url" type="url" inputmode="url" placeholder="https://app.example.com" required></label><button class="secondary" type="submit">Save server</button><small id="mobile-server-status" role="status"></small></form></details><form id="admin-login" class="portal-choice"><strong>Admin portal</strong><span>Manage students and review practice progress</span><label>Admin password<input id="admin-password" type="password" autocomplete="current-password" required></label><button class="primary" type="submit">Sign in as admin →</button></form><form id="student-login" class="portal-choice student-choice"><strong>Student portal</strong><span>Practice abacus and see your progress</span><label>Student ID<input id="student-id" inputmode="numeric" type="number" min="1" required></label><label>Access code<input id="student-code" type="password" autocomplete="off" required></label><button class="primary" type="submit">Sign in as student →</button></form><p id="portal-error" role="alert"></p><small class="demo-note">Students: ask your instructor for your ID and access code.</small></div></div>
+  <dialog id="code-dialog"><div class="dialog-head"><div><div class="eyebrow">STUDENT ACCESS</div><h2>Share sign-in details</h2></div><button type="button" class="icon-button" id="close-code" aria-label="Close">×</button></div><p>Give these details to the student or guardian. The code is shown only now.</p><div class="code-detail"><span>Student ID</span><strong id="new-student-id"></strong></div><div class="code-detail"><span>Access code</span><strong id="new-student-code"></strong></div><p class="subtitle">A new code can be generated later from the student directory.</p><div class="dialog-actions"><button type="button" class="primary" id="done-code">Done</button></div></dialog>
+  <dialog id="student-dialog"><form id="student-form"><div class="dialog-head"><div><div class="eyebrow">STUDENT MANAGEMENT</div><h2 id="student-dialog-title">Add a student</h2></div><button type="button" class="icon-button" id="close-dialog" aria-label="Close">×</button></div><div class="form-grid"><label>Student name<input name="name" maxlength="80" required autocomplete="off" placeholder="e.g. Aarav Sharma"></label><label>Age<input name="age" type="number" min="4" max="18" required placeholder="e.g. 8"></label><label>Guardian name<input name="guardian" maxlength="80" required placeholder="e.g. Priya Sharma"></label><label>Phone number<input name="phone" type="tel" minlength="7" maxlength="20" required placeholder="e.g. +91 98765 43210"></label><label class="wide">Learning level<select name="level"><option>Beginner</option><option>Level 1</option><option>Level 2</option><option>Level 3</option></select></label></div><p id="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" id="cancel-dialog">Cancel</button><button class="primary" id="student-save-button" type="submit">Save student</button></div></form></dialog>
+  <dialog id="review-dialog"><form id="review-form"><div class="dialog-head"><div><div class="eyebrow">ADMIN REVIEW</div><h2>Update progress</h2></div><button type="button" class="icon-button" id="close-review" aria-label="Close">×</button></div><p id="review-session-summary" class="subtitle"></p><label class="review-label">Checkpoint after this session <strong id="review-value">0%</strong><input id="review-progress" name="progress" type="range" min="0" max="100" step="25" value="0"></label><small>Starting 0 · Building 25 · Practicing 50 · Confident 75 · Mastered 100. Progress cannot decrease within a level.</small><label class="review-label">Admin note<textarea id="review-note" name="note" maxlength="500" rows="3" placeholder="What did the student practice?"></textarea></label><p id="review-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" id="cancel-review">Cancel</button><button class="primary" type="submit">Save progress</button></div></form></dialog>
+  <dialog id="fee-dialog"><form id="fee-form"><div class="dialog-head"><div><div class="eyebrow">FEE MANAGEMENT</div><h2>Set current fee</h2></div><button type="button" class="icon-button" id="close-fee" aria-label="Close">×</button></div><p class="subtitle">This fee will apply to every student. Creating a new fee archives the current one.</p><div class="form-grid"><label class="wide">Fee name<input name="label" maxlength="80" required placeholder="e.g. October 2026 tuition"></label><label>Amount (₹)<input name="amount" type="number" min="0.01" max="1000000" step="0.01" required placeholder="e.g. 1500.00"></label><label>UPI ID<input name="upi_id" maxlength="100" placeholder="e.g. institute@upi"></label><label class="wide">Due date<input name="due_date" type="date" required></label><label class="wide">Bank payment instructions<textarea name="instructions" maxlength="300" rows="3" placeholder="Optional if a UPI ID is entered"></textarea></label></div><p id="fee-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" id="cancel-fee">Cancel</button><button class="primary" type="submit">Save fee</button></div></form></dialog>
+  <dialog id="payment-dialog"><form id="payment-form"><div class="dialog-head"><div><div class="eyebrow">PAYMENT REFERENCE</div><h2>I have paid</h2></div><button type="button" class="icon-button" id="close-payment" aria-label="Close">×</button></div><p id="payment-summary" class="subtitle"></p><label class="review-label">UPI / bank transaction reference<input id="payment-reference" name="reference" minlength="6" maxlength="60" required autocomplete="off" placeholder="Enter the UTR or transaction ID"></label><p class="subtitle">Your payment will show as pending until the admin verifies the transfer.</p><p id="payment-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" id="cancel-payment">Cancel</button><button class="primary" type="submit">Send reference</button></div></form></dialog>
+  <dialog id="payment-review-dialog"><div class="dialog-head"><div><div class="eyebrow">PAYMENT REVIEW</div><h2>Verify transfer</h2></div><button type="button" class="icon-button" id="close-payment-review" aria-label="Close">×</button></div><p id="payment-review-summary" class="subtitle"></p><label class="review-label">Admin note (optional)<textarea id="payment-review-note" maxlength="300" rows="3"></textarea></label><label class="payment-check"><input id="bank-verified" type="checkbox"> I checked the bank or UPI statement and matched the amount and reference.</label><p id="payment-review-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" id="reject-payment">Reject reference</button><button class="primary" id="confirm-payment">Mark as paid</button></div></dialog>
+  <dialog id="receipt-dialog"><div class="dialog-head"><div><div class="eyebrow">PAYMENT RECEIPT</div><h2>Payment confirmed</h2></div><button type="button" class="icon-button" id="close-receipt" aria-label="Close">×</button></div><div id="receipt-details" class="receipt-details"></div><p class="subtitle">This receipt records an admin-verified reference, not an independent bank verification.</p><div class="dialog-actions"><button type="button" class="secondary" id="print-receipt">Print receipt</button></div></dialog>
+  <dialog id="worksheet-dialog"><form id="worksheet-form"><div class="dialog-head"><div><div class="eyebrow">NEW WORKSHEET</div><h2>Assign a worksheet</h2></div><button type="button" class="icon-button" id="close-worksheet" aria-label="Close">×</button></div><div class="form-grid"><label class="wide">Title<input name="title" maxlength="80" required placeholder="e.g. Addition warm-up"></label><label class="wide">Level<select name="level"><option>All levels</option><option>Beginner</option><option>Level 1</option><option>Level 2</option><option>Level 3</option></select></label><label class="wide">Questions, one per line<textarea name="questions" rows="7" required placeholder="12 + 5&#10;24 - 9&#10;13 + 6"></textarea></label></div><p id="worksheet-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" id="cancel-worksheet">Cancel</button><button class="primary" type="submit">Assign worksheet</button></div></form></dialog>
+  <dialog id="worksheet-solve-dialog"><form id="worksheet-solve-form"><div class="dialog-head"><div><div class="eyebrow">WORKSHEET</div><h2 id="worksheet-solve-title"></h2></div><button type="button" class="icon-button" id="close-worksheet-solve" aria-label="Close">×</button></div><div id="worksheet-questions"></div><p id="worksheet-solve-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" id="cancel-worksheet-solve">Cancel</button><button class="primary" type="submit">Submit answers</button></div></form></dialog>
+  <dialog id="worksheet-review-dialog"><form id="worksheet-review-form"><div class="dialog-head"><div><div class="eyebrow">WORKSHEET REVIEW</div><h2>Update progress</h2></div><button type="button" class="icon-button" id="close-worksheet-review" aria-label="Close">×</button></div><p id="worksheet-review-summary" class="subtitle"></p><label class="review-label">Checkpoint after this worksheet <strong id="worksheet-review-value">0%</strong><input id="worksheet-review-progress" type="range" min="0" max="100" step="25" value="0"></label><small>Progress cannot decrease within a level.</small><label class="review-label">Instructor note<textarea id="worksheet-review-note" maxlength="500" rows="3"></textarea></label><p id="worksheet-review-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" id="cancel-worksheet-review">Cancel</button><button class="primary" type="submit">Save progress</button></div></form></dialog>
+</body>
+</html>

@@ -1,5 +1,5 @@
 [build]
-  command = "mkdir -p dist && cp index.html gallery.html content.json 'Matrix Academy Abacus.png' dist/ && cp -R images pdfs dist/"
+  command = "mkdir -p dist/app && cp index.html gallery.html content.json 'Matrix Academy Abacus.png' dist/ && cp -R images pdfs dist/ && cp app/index.html app/app.js app/style.css app/matrix-abacus-logo.png dist/app/"
   publish = "dist"
 
 [functions]
