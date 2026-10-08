@@ -1,6 +1,6 @@
 # Matrix Abacus website and media
 
-The public Student and Admin portal is available at [`/app/`](https://matrixabacus.com/app/). It uses the same Firebase-backed API as the mobile build. Admins create student accounts and review practice, worksheets, schedules, and payment references; students use the ID and one-time access code supplied by the institute.
+The Student and Admin portal source remains in `app/` for later use, but it is not published on the public website. Visits to `/app/` return to the showcase homepage.
 
 The website runs on Netlify. Its gallery and public PDF downloads can be managed by uploading files to one dedicated Google Drive folder. The owner does not need to edit this repository after the one-time setup.
 
