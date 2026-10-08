@@ -4,8 +4,3 @@
 
 [functions]
   node_bundler = "esbuild"
-
-[[redirects]]
-  from = "/app/*"
-  to = "/"
-  status = 302
