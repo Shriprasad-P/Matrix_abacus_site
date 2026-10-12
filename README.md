@@ -1,6 +1,6 @@
 # Matrix Abacus website and media
 
-The Student and Admin portal source remains in `app/` for later use, but it is not published on the public website.
+The Student and Admin portal source remains in `app/` for the mobile application, but it is not published on the public website. Admins add students with a guardian phone number; students sign in with their student ID and that phone number as the permanent password. Changing the phone number signs out active student sessions. Phone numbers are easy to guess or learn, so replace this password rule with a stronger sign-in method before enrolling real students at scale.
 
 The website runs on Netlify. Its gallery and public PDF downloads can be managed by uploading files to one dedicated Google Drive folder. The owner does not need to edit this repository after the one-time setup.
 
@@ -34,5 +34,13 @@ In the Netlify project, open **Project configuration → Environment variables**
 - `ABACUS_ADMIN_PASSWORD`: a long, unique administrator password. Keep it only in Netlify.
 
 Trigger a new deploy after saving the variables. The API is then available at `https://matrixabacus.com/api/*`; opening `https://matrixabacus.com/api/me` while signed out should return JSON `401`, confirming the function is present. The mobile build can use `ABACUS_API_URL=https://matrixabacus.com`.
+
+## Private lesson videos
+
+1. In the institute's Google Drive, create a **separate private folder** for lesson videos. Keep link sharing restricted; do not use the public website media folder.
+2. Share that folder with the service account email in `GOOGLE_SERVICE_ACCOUNT_JSON` as **Viewer**. Upload MP4 videos encoded with H.264 video and AAC audio for iOS and Android playback. Keep each file below 2 GB.
+3. In Netlify, set `DRIVE_LESSON_VIDEO_FOLDER_ID` for **Production** to the ID in the private folder URL. Keep the existing `GOOGLE_SERVICE_ACCOUNT_JSON` available to Functions, then redeploy.
+
+The owner adds or removes lessons by changing files in that Drive folder; video titles come from filenames. A student sees the lesson list only when the admin has marked the **current fee** paid. Pending, rejected, or unpaid fees keep it locked. Starting a new fee cycle locks videos until that cycle is verified. The API checks this again for each playback request, and the video URL expires after two hours. The site uses short byte-range streams so large files stay within Netlify's per-response limit. There is no public Drive link in the app. A shared playback URL can still be reused until it expires, so this is access control rather than download-proof DRM.
 
 This setup does not require a paid VPS or Firebase billing for the current pilot. Existing local SQLite data is not migrated automatically; create or import production records through the Admin screens after the first successful deploy. Do not enable public Firestore rules.

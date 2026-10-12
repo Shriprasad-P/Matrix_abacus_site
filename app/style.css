@@ -39,3 +39,4 @@
 .bead{min-height:44px}
 @media(max-width:700px){.bead{width:48px}.lower-zone .active-stack,.lower-zone .inactive-stack{gap:2px}.lower-zone .active-stack{top:4px}.lower-zone .inactive-stack{bottom:4px}}
 .primary:disabled,.secondary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.video-list{margin-top:24px}.video-card{display:grid;gap:12px;justify-items:start}.video-card video{display:block;width:min(100%,760px);max-height:65vh;background:#15202d;border-radius:12px}.video-card p{margin:0;color:#a44239;font-size:13px}

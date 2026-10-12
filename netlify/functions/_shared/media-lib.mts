@@ -1,5 +1,6 @@
 import { getStore } from '@netlify/blobs';
-import { GoogleAuth } from 'google-auth-library';
+import { driveToken } from './drive-auth.mts';
+export { driveToken } from './drive-auth.mts';
 
 export function mediaStore() {
   // Only the production-only scheduled function writes to this site-wide store.
@@ -8,18 +9,6 @@ export function mediaStore() {
 
 export function configured() {
   return Boolean(Netlify.env.get('DRIVE_MEDIA_FOLDER_ID') && Netlify.env.get('GOOGLE_SERVICE_ACCOUNT_JSON'));
-}
-
-export async function driveToken() {
-  const credentials = JSON.parse(Netlify.env.get('GOOGLE_SERVICE_ACCOUNT_JSON') || '{}');
-  const auth = new GoogleAuth({
-    credentials,
-    scopes: ['https://www.googleapis.com/auth/drive.readonly']
-  });
-  const client = await auth.getClient();
-  const { token } = await client.getAccessToken();
-  if (!token) throw new Error('Google Drive token unavailable');
-  return token;
 }
 
 export async function listDriveFiles() {

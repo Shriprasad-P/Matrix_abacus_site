@@ -32,14 +32,15 @@ const places = ['THOUSANDS', 'HUNDREDS', 'TENS', 'ONES'];
 
 function show(view) {
   if (portalRole === 'admin' && !['dashboard','students','admin-schedule','progress','admin-worksheets','admin-fees'].includes(view)) view = 'dashboard';
-  if (portalRole === 'student' && !['student-home','practice','student-schedule','student-worksheets','my-progress','student-fees'].includes(view)) view = 'student-home';
-  for (const name of ['dashboard', 'students', 'admin-schedule', 'practice', 'progress', 'admin-worksheets', 'student-home', 'student-schedule', 'student-worksheets', 'my-progress', 'admin-fees', 'student-fees']) $(name + '-view').classList.toggle('hidden', name !== view);
+  if (portalRole === 'student' && !['student-home','practice','student-schedule','student-worksheets','student-videos','my-progress','student-fees'].includes(view)) view = 'student-home';
+  for (const name of ['dashboard', 'students', 'admin-schedule', 'practice', 'progress', 'admin-worksheets', 'student-home', 'student-schedule', 'student-worksheets', 'student-videos', 'my-progress', 'admin-fees', 'student-fees']) $(name + '-view').classList.toggle('hidden', name !== view);
   navButtons.forEach(button => button.classList.toggle('active', button.dataset.view === view));
-  $('breadcrumb').textContent = {dashboard:'Overview', students:'Students','admin-schedule':'Class schedule', practice:'Abacus Lab', progress:'Reviews','admin-worksheets':'Worksheets','student-home':'My home','student-schedule':'My classes','student-worksheets':'Worksheets','my-progress':'Profile','admin-fees':'Payments','student-fees':'Payments'}[view];
+  $('breadcrumb').textContent = {dashboard:'Overview', students:'Students','admin-schedule':'Class schedule', practice:'Abacus Lab', progress:'Reviews','admin-worksheets':'Worksheets','student-home':'My home','student-schedule':'My classes','student-worksheets':'Worksheets','student-videos':'Videos','my-progress':'Profile','admin-fees':'Payments','student-fees':'Payments'}[view];
   if (['progress','my-progress'].includes(view)) loadSessions();
   if (['admin-fees','student-fees'].includes(view)) loadFees();
   if (['progress','admin-worksheets','student-home','student-worksheets','my-progress'].includes(view)) loadWorksheets();
   if (['admin-schedule','student-home','student-schedule'].includes(view)) loadSchedule();
+  if (view === 'student-videos') loadVideos();
   if (view === 'practice' && !activeChallenge && !savingAnswer) $('new-challenge').click();
 }
 navButtons.forEach(button => button.addEventListener('click', () => show(button.dataset.view)));
@@ -68,7 +69,7 @@ async function signIn(path, payload) {
   } catch (error) { $('portal-error').textContent = error.message; }
 }
 $('admin-login').onsubmit = event => { event.preventDefault(); signIn('/api/login/admin',{password:$('admin-password').value}); };
-$('student-login').onsubmit = event => { event.preventDefault(); signIn('/api/login/student',{student_id:$('student-id').value,code:$('student-code').value}); };
+$('student-login').onsubmit = event => { event.preventDefault(); signIn('/api/login/student',{student_id:$('student-id').value,password:$('student-password').value}); };
 $('switch-portal').onclick = async () => { await apiFetch('/api/logout',{method:'POST'}); location.reload(); };
 async function restoreSession() {
   if (mobileApp) return;
@@ -268,16 +269,6 @@ function renderStudents() {
     action.className = 'student-actions';
     const edit = document.createElement('button'); edit.className = 'code-reset'; edit.textContent = 'Edit';
     edit.setAttribute('aria-label', 'Edit ' + s.name); edit.onclick = () => openStudentForm(s);
-    const reset = document.createElement('button');
-    reset.className = 'code-reset'; reset.textContent = 'Access code';
-    reset.setAttribute('aria-label', 'Reset access code for ' + s.name);
-    reset.onclick = async () => {
-      if (!confirm('Generate a new access code for ' + s.name + '? The old code will stop working.')) return;
-      const response = await apiFetch('/api/students/' + s.id + '/reset-code', {method:'POST'});
-      const result = await response.json();
-      if (response.ok) showCode(result.student_id, result.access_code);
-      else alert(result.error || 'Could not reset access code.');
-    };
     const archive = document.createElement('button');
     archive.className = 'code-reset'; archive.textContent = s.archived ? 'Restore' : 'Archive';
     archive.setAttribute('aria-label', (s.archived ? 'Restore ' : 'Archive ') + s.name);
@@ -287,7 +278,7 @@ function renderStudents() {
       if (response.ok) await loadStudents();
       else alert((await response.json()).error || 'Could not update student.');
     };
-    action.append(edit,reset,archive); row.append(action); tbody.append(row);
+    action.append(edit,archive); row.append(action); tbody.append(row);
   }
   $('student-empty').textContent = query ? 'No matching students.' : 'No students yet. Add your first student to get started.';
   $('student-empty').classList.toggle('hidden', shown.length > 0);
@@ -331,13 +322,13 @@ $('student-form').onsubmit = async event => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Could not save student.');
     form.reset(); $('student-dialog').close(); show('students'); await loadStudents();
-    if (!editingStudent) showCode(result.id,result.access_code);
+    if (!editingStudent) showCredentials(result.id,result.phone);
     editingStudent = null;
   } catch (error) { $('form-error').textContent = error.message; }
 };
-function showCode(id, code) {
+function showCredentials(id, phone) {
   $('new-student-id').textContent = id;
-  $('new-student-code').textContent = code;
+  $('new-student-phone').textContent = phone.replace(/\D/g, '');
   $('code-dialog').showModal();
 }
 $('close-code').onclick = $('done-code').onclick = () => $('code-dialog').close();
@@ -393,6 +384,51 @@ function renderStudentSessions() {
       session.reviewed_progress === null ? 'Awaiting instructor review' : 'Reviewed · ' + session.reviewed_progress + '% progress';
     details.append(title,result,status); card.append(details); all.append(card);
   }
+}
+
+async function loadVideos() {
+  const list = $('student-video-list');
+  list.textContent = 'Checking your video access…';
+  try {
+    const response = await apiFetch('/api/videos');
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Could not load videos.');
+    list.replaceChildren();
+    if (!data.unlocked) {
+      const card = document.createElement('article'); card.className = 'session-card';
+      addText(card, 'strong', 'Videos are locked');
+      addText(card, 'p', 'Your current fee must be marked paid by the admin before lessons are available.');
+      const button = document.createElement('button'); button.className = 'secondary';
+      button.textContent = 'View my payment →'; button.onclick = () => show('student-fees');
+      card.append(button); list.append(card); return;
+    }
+    if (!data.configured) { list.textContent = 'The institute is preparing the private video library.'; return; }
+    if (!data.videos.length) { list.textContent = 'No video lessons have been added yet.'; return; }
+    for (const item of data.videos) {
+      const card = document.createElement('article'); card.className = 'session-card video-card';
+      addText(card, 'strong', item.title);
+      const button = document.createElement('button'); button.className = 'primary'; button.textContent = 'Watch lesson';
+      const message = document.createElement('p'); message.setAttribute('role', 'status');
+      button.onclick = async () => {
+        button.disabled = true; message.textContent = 'Opening lesson…';
+        try {
+          const opened = await apiFetch('/api/videos/' + encodeURIComponent(item.id) + '/play', {method:'POST'});
+          const result = await opened.json();
+          if (!opened.ok) throw new Error(result.error || 'Could not open lesson.');
+          document.querySelectorAll('.video-card video').forEach(other => { other.pause(); other.remove(); });
+          const player = document.createElement('video');
+          player.controls = true; player.playsInline = true; player.preload = 'metadata';
+          player.src = new URL(result.url, mobileApp ? apiOrigin : location.origin).href;
+          player.setAttribute('aria-label', item.title);
+          player.onerror = () => { message.textContent = 'Video playback stopped. Open the lesson again to renew access.'; };
+          card.append(player); message.textContent = '';
+          player.play().catch(() => {});
+        } catch (error) { message.textContent = error.message; }
+        finally { button.disabled = false; }
+      };
+      card.append(button, message); list.append(card);
+    }
+  } catch (error) { list.textContent = error.message; }
 }
 function renderSessions() {
   const list = $('session-list'); list.replaceChildren();

@@ -1,7 +1,8 @@
 import type { Config, Context } from '@netlify/functions';
-import { createHash, pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { driveToken } from './_shared/drive-auth.mts';
 
 const levels = ['Beginner', 'Level 1', 'Level 2', 'Level 3'];
 const challengeRules: Record<string, [number, number, number]> = {
@@ -11,7 +12,10 @@ const challengeRules: Record<string, [number, number, number]> = {
 const checkpoints = [0, 25, 50, 75, 100];
 const now = () => new Date().toISOString();
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
+const phoneDigits = (value: string) => value.replace(/\D/g, '');
 const slotId = (slot: any) => `${slot.day}|${slot.start}|${slot.end}`;
+const videoMime = 'video/mp4';
+const videoChunkBytes = 8 * 1024 * 1024;
 const id = () => Date.now() * 1000 + randomInt(1000);
 const col = (name: string) => database().collection(name);
 const list = async (name: string) => (await col(name).get()).docs.map(doc => doc.data());
@@ -55,10 +59,14 @@ async function input(req: Request) {
   return value;
 }
 
-async function identity(req: Request) {
+function sessionToken(req: Request) {
   const cookie = req.headers.get('cookie')?.match(/(?:^|; )abacus_session=([^;]+)/)?.[1];
   const bearer = req.headers.get('authorization')?.match(/^Bearer (.+)$/)?.[1];
-  const token = bearer || cookie;
+  return bearer || cookie;
+}
+
+async function identity(req: Request) {
+  const token = sessionToken(req);
   if (!token) return null;
   const session = await one('abacus_sessions', hash(token));
   if (!session || session.expires <= Date.now()) return null;
@@ -113,11 +121,10 @@ async function login(req: Request, path: string, ip: string) {
     studentId = Number(data.student_id);
     const student = Number.isSafeInteger(studentId) && studentId > 0
       ? await one('abacus_students', studentId) : null;
-    const candidate = typeof data.code === 'string' && student?.access_salt
-      ? pbkdf2Sync(data.code, Buffer.from(student.access_salt, 'hex'), 200000, 32, 'sha256').toString('hex') : '';
-    required(Boolean(student && !student.archived && student.access_hash && candidate &&
-      timingSafeEqual(Buffer.from(candidate, 'hex'), Buffer.from(student.access_hash, 'hex'))),
-      'Invalid student ID or access code', 401);
+    const candidate = typeof data.password === 'string' ? phoneDigits(data.password) : '';
+    required(Boolean(student && !student.archived && candidate &&
+      matchSecret(candidate, phoneDigits(student.phone))),
+      'Invalid student ID or phone number', 401);
     accessVersion = student.access_version;
   }
   const token = randomBytes(32).toString('base64url');
@@ -134,16 +141,10 @@ function studentDetails(data: any) {
   required(name.length >= 1 && name.length <= 80 && guardian.length >= 1 && guardian.length <= 80,
     'Student and guardian names must be 1–80 characters.');
   required(Number.isInteger(age) && age >= 4 && age <= 18, 'Age must be a whole number from 4 to 18.');
-  required(phone.length >= 7 && phone.length <= 20 && /^[+\d ()-]+$/.test(phone), 'Enter a valid phone number.');
+  required(phone.length <= 20 && /^[+\d ()-]+$/.test(phone) &&
+    phoneDigits(phone).length >= 7 && phoneDigits(phone).length <= 15, 'Enter a valid phone number.');
   required(levels.includes(level), 'Choose a valid level.');
   return { name, guardian, phone, age, level };
-}
-
-function newCode() {
-  const code = randomBytes(9).toString('base64url');
-  const salt = randomBytes(16).toString('hex');
-  const digest = pbkdf2Sync(code, Buffer.from(salt, 'hex'), 200000, 32, 'sha256').toString('hex');
-  return { code, salt, digest };
 }
 
 function feeDetails(data: any) {
@@ -160,6 +161,105 @@ function feeDetails(data: any) {
   required(/^\d{4}-\d{2}-\d{2}$/.test(due_date) && !Number.isNaN(date.getTime()) &&
     date.toISOString().startsWith(due_date), 'Enter a valid payment due date.');
   return { label, amount_paise: Math.round(Number(amount) * 100), upi_id, instructions, due_date };
+}
+
+function videoEntitlement(student: any, cycleId: number | undefined, payment: any) {
+  return Boolean(student && !student.archived && cycleId &&
+    cycleId >= student.first_fee_cycle_id && payment?.student_id === student.id &&
+    payment?.cycle_id === cycleId && payment?.status === 'paid');
+}
+
+async function studentCanWatch(studentId: number) {
+  const student = await one('abacus_students', studentId);
+  const cycleId = (await one('abacus_settings', 'fee'))?.current_id;
+  const latest = cycleId ? await one('abacus_payment_latest', `${studentId}_${cycleId}`) : null;
+  const payment = latest?.payment_id ? await one('abacus_fee_payments', latest.payment_id) : null;
+  return videoEntitlement(student, cycleId, payment);
+}
+
+function lessonFolder() {
+  const folder = Netlify.env.get('DRIVE_LESSON_VIDEO_FOLDER_ID')?.trim();
+  return folder && folder !== Netlify.env.get('DRIVE_MEDIA_FOLDER_ID') && /^[\w-]+$/.test(folder)
+    ? folder : null;
+}
+
+async function driveVideo(fileId: string) {
+  const folder = lessonFolder();
+  required(Boolean(folder), 'Lesson videos are not configured', 503);
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size,parents,trashed&supportsAllDrives=true`, {
+    headers: { Authorization: `Bearer ${await driveToken()}` }
+  });
+  required(response.ok, 'Video unavailable', response.status === 404 ? 404 : 502);
+  const file = await response.json();
+  required(!file.trashed && file.mimeType === videoMime && file.parents?.includes(folder) &&
+    Number(file.size) > 0 && Number(file.size) <= 2 * 1024 * 1024 * 1024,
+    'Video unavailable', 404);
+  return { id: file.id, title: String(file.name || 'Lesson').replace(/\.mp4$/i, '').slice(0, 120),
+    mimeType: videoMime, size: Number(file.size) };
+}
+
+async function listLessonVideos() {
+  const folder = lessonFolder();
+  if (!folder) return [];
+  const token = await driveToken();
+  const files: any[] = [];
+  let pageToken = '';
+  do {
+    const params = new URLSearchParams({
+      q: `'${folder}' in parents and trashed = false and mimeType = '${videoMime}'`,
+      fields: 'nextPageToken,files(id,name,mimeType,size)', pageSize: '1000',
+      orderBy: 'name', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true'
+    });
+    if (pageToken) params.set('pageToken', pageToken);
+    const response = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    required(response.ok, 'Lesson videos are unavailable', 502);
+    const page = await response.json();
+    files.push(...(page.files || []));
+    pageToken = page.nextPageToken || '';
+  } while (pageToken);
+  return files.filter(file => /^[\w-]+$/.test(file.id) && Number(file.size) > 0 &&
+      Number(file.size) <= 2 * 1024 * 1024 * 1024)
+    .map(file => ({ id: file.id, title: String(file.name || 'Lesson').replace(/\.mp4$/i, '').slice(0, 120) }));
+}
+
+function videoRange(requested: string | null, size: number) {
+  const match = requested?.match(/^bytes=(\d+)-(\d*)$/);
+  required(!requested || Boolean(match), 'Use a single byte range', 416);
+  const start = match ? Number(match[1]) : 0;
+  const requestedEnd = match?.[2] ? Number(match[2]) : size - 1;
+  required(Number.isSafeInteger(start) && Number.isSafeInteger(requestedEnd) &&
+    start >= 0 && start < size && requestedEnd >= start, 'Range unavailable', 416);
+  return { start, end: Math.min(requestedEnd, start + videoChunkBytes - 1, size - 1) };
+}
+
+async function streamLessonVideo(req: Request, fileId: string, origin: string) {
+  const ticket = new URL(req.url).searchParams.get('ticket') || '';
+  required(/^[\w-]{40,}$/.test(ticket), 'Video sign-in required', 401);
+  const play = await one('abacus_video_tickets', hash(ticket));
+  required(Boolean(play && play.video_id === fileId && play.expires > Date.now()), 'Video link expired', 401);
+  const session = await one('abacus_sessions', play!.session_hash);
+  const student = await one('abacus_students', play!.student_id);
+  required(Boolean(session && session.role === 'student' && session.student_id === play!.student_id &&
+    session.access_version === student?.access_version && session.expires > Date.now() &&
+    await studentCanWatch(play!.student_id)), 'Payment verification required', 403);
+  const size = Number(play!.size);
+  const { start, end } = videoRange(req.headers.get('range'), size);
+  const upstream = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { Authorization: `Bearer ${await driveToken()}`, Range: `bytes=${start}-${end}` }
+  });
+  required(upstream.status === 206 &&
+    upstream.headers.get('content-range') === `bytes ${start}-${end}/${size}`,
+    'Video stream unavailable', 502);
+  return new Response(upstream.body, { status: 206, headers: {
+    'Content-Type': videoMime, 'Content-Length': String(end - start + 1),
+    'Content-Range': `bytes ${start}-${end}/${size}`, 'Accept-Ranges': 'bytes',
+    'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'no-referrer',
+    ...(['capacitor://localhost', 'http://localhost'].includes(origin)
+      ? { 'Access-Control-Allow-Origin': origin } : {})
+  } });
 }
 
 function worksheetDetails(data: any) {
@@ -269,6 +369,11 @@ async function getData(path: string, session: any) {
       return { ...payment, label: cycle?.label, amount_paise: cycle?.amount_paise, due_date: cycle?.due_date };
     }) };
   }
+  if (path === '/api/videos') {
+    const unlocked = session.role === 'admin' || await studentCanWatch(session.student_id);
+    return { unlocked, configured: Boolean(lessonFolder()),
+      videos: unlocked ? await listLessonVideos() : [] };
+  }
   if (path === '/api/worksheets') {
     const student = session.role === 'student' ? await one('abacus_students', session.student_id) : null;
     const all = order(await list('abacus_worksheets'));
@@ -298,10 +403,22 @@ async function getData(path: string, session: any) {
 
 async function postData(path: string, req: Request, session: any): Promise<[any, number]> {
   requireRole(session);
+  const videoMatch = path.match(/^\/api\/videos\/([\w-]+)\/play$/);
+  if (videoMatch) {
+    requireRole(session, 'student');
+    required(await studentCanWatch(session.student_id), 'Payment verification required to watch videos', 403);
+    const video = await driveVideo(videoMatch[1]);
+    const token = randomBytes(32).toString('base64url');
+    await col('abacus_video_tickets').doc(hash(token)).set({
+      student_id: session.student_id, video_id: video.id, size: video.size,
+      session_hash: hash(sessionToken(req)!), expires: Date.now() + 2 * 60 * 60 * 1000,
+      expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000)
+    });
+    return [{ url: `/api/videos/${video.id}/stream?ticket=${token}` }, 200];
+  }
   if (path === '/api/students') {
     requireRole(session, 'admin');
     const details = studentDetails(await input(req));
-    const { code, salt, digest } = newCode();
     const student = await database().runTransaction(async tx => {
       const countRef = col('abacus_settings').doc('student_counter');
       const feeRef = col('abacus_settings').doc('fee');
@@ -309,14 +426,14 @@ async function postData(path: string, req: Request, session: any): Promise<[any,
       const fee = (await tx.get(feeRef)).data();
       const studentId = count?.next || 1001;
       const value = { id: studentId, ...details, progress: 0, mastery_streak: 0, archived: false,
-        access_salt: salt, access_hash: digest, access_version: 1,
+        access_version: 1,
         first_fee_cycle_id: fee?.current_id || 0, created_at: now(), active_challenge_id: null };
       tx.create(col('abacus_students').doc(String(studentId)), value);
       tx.set(countRef, { next: studentId + 1 });
       return value;
     });
-    const { access_salt, access_hash, access_version, first_fee_cycle_id, active_challenge_id, ...publicStudent } = student;
-    return [{ ...publicStudent, access_code: code }, 201];
+    const { access_version, first_fee_cycle_id, active_challenge_id, ...publicStudent } = student;
+    return [publicStudent, 201];
   }
   if (path === '/api/fees') {
     requireRole(session, 'admin');
@@ -359,7 +476,7 @@ async function postData(path: string, req: Request, session: any): Promise<[any,
     });
     return [result, 201];
   }
-  const match = path.match(/^\/api\/(challenges|worksheets|fees|students)\/(\d+)\/(answer|submit|reset-code|archive)$/);
+  const match = path.match(/^\/api\/(challenges|worksheets|fees|students)\/(\d+)\/(answer|submit|archive)$/);
   if (!match) {
     if (path === '/api/sessions') fail(410, 'Start a timed challenge before submitting practice.');
     fail(404, 'Not found');
@@ -454,18 +571,9 @@ async function postData(path: string, req: Request, session: any): Promise<[any,
     });
     return [result, 201];
   }
-  if (kind === 'students' && (action === 'reset-code' || action === 'archive')) {
+  if (kind === 'students' && action === 'archive') {
     requireRole(session, 'admin');
     const ref = col('abacus_students').doc(String(itemId));
-    if (action === 'reset-code') {
-      const { code, salt, digest } = newCode();
-      await database().runTransaction(async tx => {
-        const student = (await tx.get(ref)).data();
-        required(Boolean(student), 'Student not found', 404);
-        tx.update(ref, { access_salt: salt, access_hash: digest, access_version: student!.access_version + 1 });
-      });
-      return [{ student_id: itemId, access_code: code }, 200];
-    }
     const { archived } = await input(req);
     required(typeof archived === 'boolean', 'Choose archive or restore.');
     await database().runTransaction(async tx => {
@@ -544,7 +652,8 @@ async function putData(path: string, req: Request, session: any): Promise<any> {
       required(Boolean(current), 'Student not found', 404);
       tx.update(ref, { ...details, progress: details.level === current!.level ? current!.progress : 0,
         mastery_streak: details.level === current!.level ? current!.mastery_streak : 0,
-        active_challenge_id: details.level === current!.level ? current!.active_challenge_id : null });
+        active_challenge_id: details.level === current!.level ? current!.active_challenge_id : null,
+        access_version: details.phone === current!.phone ? current!.access_version : current!.access_version + 1 });
     });
     return { id: studentId };
   }
@@ -601,6 +710,9 @@ export default async (req: Request, context: Context) => {
   if (req.method !== 'GET' && origin && ![new URL(req.url).origin, 'capacitor://localhost', 'http://localhost'].includes(origin))
     return reply({ error: 'Request origin not allowed' }, 403, origin);
   try {
+    const streamMatch = path.match(/^\/api\/videos\/([\w-]+)\/stream$/);
+    if (req.method === 'GET' && streamMatch)
+      return await streamLessonVideo(req, streamMatch[1], origin);
     if (req.method === 'POST' && ['/api/login/admin', '/api/login/student'].includes(path)) {
       const result = await login(req, path, context.ip);
       if (origin === 'capacitor://localhost' || origin === 'http://localhost') return reply(result, 200, origin);
@@ -631,4 +743,4 @@ export default async (req: Request, context: Context) => {
 
 export const config: Config = { path: '/api/*', excludedPath: '/api/media/*' };
 
-export { feeDetails, worksheetDetails, scheduleDetails };
+export { feeDetails, worksheetDetails, scheduleDetails, videoEntitlement, videoRange };
