@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import api from './netlify/functions/abacus-api.mts';
+import { getFirestore } from 'firebase-admin/firestore';
 
 test('admin and student flows keep scoring, seats, and payments on the server', {
   skip: !process.env.FIRESTORE_EMULATOR_HOST
@@ -37,7 +38,7 @@ test('admin and student flows keep scoring, seats, and payments on the server', 
     { phone: '9999999999', password: '9999999999' }, null, true);
   assert.equal(studentLogin.status, 200);
   const student = studentLogin.data.token;
-  assert.equal((await call('/api/videos', 'GET', null, student, true)).data.unlocked, false);
+  assert.equal((await call('/api/videos', 'GET', null, student, true)).data.videos.length, 0);
   for (let i = 0; i < 5; i++) {
     const challenge = await call('/api/challenges', 'POST', {}, student, true);
     const answer = await call('/api/challenges/' + challenge.data.id + '/answer', 'POST',
@@ -64,8 +65,43 @@ test('admin and student flows keep scoring, seats, and payments on the server', 
     { status: 'paid', bank_verified: true }, admin);
   assert.equal(paid.data.status, 'paid');
   const videos = await call('/api/videos', 'GET', null, student, true);
-  assert.equal(videos.data.unlocked, true);
+  assert.equal(videos.data.videos.length, 0);
   assert.equal(videos.data.configured, false);
+  const offer = await call('/api/video-offers/level-1', 'PUT',
+    { level: 'Level 1', amount: '499.00', upi_id: 'school@upi' }, admin);
+  assert.equal(offer.data.amount_paise, 49900);
+  const purchase = await call('/api/video-orders', 'POST',
+    { level: 'Level 1', reference: 'COURSE' + Date.now() }, student, true);
+  assert.equal(purchase.data.status, 'pending');
+  assert.equal((await call('/api/video-orders', 'POST',
+    { level: 'Level 1', reference: 'COURSE2' + Date.now() }, student, true)).status, 409);
+  assert.equal((await call('/api/video-orders/' + purchase.data.id + '/review', 'PUT',
+    { status: 'paid', bank_verified: false }, admin)).status, 400);
+  const verified = await call('/api/video-orders/' + purchase.data.id + '/review', 'PUT',
+    { status: 'paid', bank_verified: true }, admin);
+  assert.equal(verified.data.status, 'paid');
+  assert.ok(verified.data.access_expires_at > Date.now());
+  const courses = await call('/api/video-courses', 'GET', null, student, true);
+  assert.equal(courses.data.courses.find(item => item.level === 'Level 1').active, true);
+  assert.equal(courses.data.courses.find(item => item.level === 'Beginner').active, false);
+  assert.equal((await call('/api/final-tests', 'POST', { level: 'Level 1' }, student, true)).status, 409);
+  assert.equal((await call('/api/certificates', 'GET', null, student, true)).data.length, 0);
+  const finalId = Date.now() * 1000 + 717;
+  await getFirestore().collection('abacus_final_tests').doc(String(finalId)).create({
+    id: finalId, student_id: studentId, level: 'Level 1', index: 4, correct: 4,
+    target: 777, deadline_at: Date.now() + 30000, finished_at: null, passed: false
+  });
+  const finalAnswer = await call('/api/final-tests/' + finalId + '/answer', 'POST',
+    { answer: 777 }, student, true);
+  assert.equal(finalAnswer.data.passed, true);
+  assert.equal((await call('/api/certificates', 'GET', null, student, true)).data.length, 1);
+  const certPath = '/api/certificates/' + finalAnswer.data.certificate_id + '.svg';
+  const certificate = await api(new Request(base + certPath, {
+    headers: { Authorization: 'Bearer ' + student, Origin: 'capacitor://localhost' }
+  }), { ip: '192.0.2.123' });
+  assert.equal(certificate.status, 200);
+  assert.match(await certificate.text(), /Certificate of Completion/);
+  assert.equal((await call(certPath, 'GET', null, null, false)).status, 401);
   const slots = [
     { day: 1, start: '16:00', end: '17:00', capacity: 1 },
     { day: 3, start: '16:00', end: '17:00', capacity: 1 }

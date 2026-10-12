@@ -14,6 +14,12 @@ let students = [];
 let sessions = [];
 let reviewingSession = null;
 let feeData = {cycles:[], payments:[]};
+let videoCourses = {offers:[], orders:[], courses:[]};
+let finalTest = null;
+let finalTimer = null;
+let finalSaving = false;
+let finalPanelResetTimer = null;
+let certificateBlobUrl = null;
 let reviewingPayment = null;
 let submittingFeeCycle = null;
 let worksheetData = {worksheets:[], attempts:[]};
@@ -31,17 +37,19 @@ const lower = [0, 0, 0, 0];
 const places = ['THOUSANDS', 'HUNDREDS', 'TENS', 'ONES'];
 
 function show(view) {
-  if (portalRole === 'admin' && !['dashboard','students','admin-schedule','progress','admin-worksheets','admin-fees'].includes(view)) view = 'dashboard';
+  if (portalRole === 'admin' && !['dashboard','students','admin-schedule','progress','admin-worksheets','admin-fees','admin-videos'].includes(view)) view = 'dashboard';
   if (portalRole === 'student' && !['student-home','practice','student-schedule','student-worksheets','student-videos','my-progress','student-fees'].includes(view)) view = 'student-home';
-  for (const name of ['dashboard', 'students', 'admin-schedule', 'practice', 'progress', 'admin-worksheets', 'student-home', 'student-schedule', 'student-worksheets', 'student-videos', 'my-progress', 'admin-fees', 'student-fees']) $(name + '-view').classList.toggle('hidden', name !== view);
+  for (const name of ['dashboard', 'students', 'admin-schedule', 'practice', 'progress', 'admin-worksheets', 'admin-videos', 'student-home', 'student-schedule', 'student-worksheets', 'student-videos', 'my-progress', 'admin-fees', 'student-fees']) $(name + '-view').classList.toggle('hidden', name !== view);
   navButtons.forEach(button => button.classList.toggle('active', button.dataset.view === view));
-  $('breadcrumb').textContent = {dashboard:'Overview', students:'Students','admin-schedule':'Class schedule', practice:'Abacus Lab', progress:'Reviews','admin-worksheets':'Worksheets','student-home':'My home','student-schedule':'My classes','student-worksheets':'Worksheets','student-videos':'Videos','my-progress':'Profile','admin-fees':'Payments','student-fees':'Payments'}[view];
+  $('breadcrumb').textContent = {dashboard:'Overview', students:'Students','admin-schedule':'Class schedule', practice:'Abacus Lab', progress:'Reviews','admin-worksheets':'Worksheets','admin-videos':'Video courses','student-home':'My home','student-schedule':'My classes','student-worksheets':'Worksheets','student-videos':'Videos','my-progress':'Profile','admin-fees':'Payments','student-fees':'Payments'}[view];
   if (['progress','my-progress'].includes(view)) loadSessions();
   if (['admin-fees','student-fees'].includes(view)) loadFees();
   if (['progress','admin-worksheets','student-home','student-worksheets','my-progress'].includes(view)) loadWorksheets();
   if (['admin-schedule','student-home','student-schedule'].includes(view)) loadSchedule();
-  if (view === 'student-videos') loadVideos();
-  if (view === 'practice' && !activeChallenge && !savingAnswer) $('new-challenge').click();
+  if (view === 'student-videos') { loadVideoCourses(); loadVideos(); }
+  if (view === 'admin-videos') loadVideoCourses();
+  if (view === 'my-progress') loadCertificates();
+  if (view === 'practice' && !activeChallenge && !savingAnswer && !finalTest) $('new-challenge').click();
 }
 navButtons.forEach(button => button.addEventListener('click', () => show(button.dataset.view)));
 function enterPortal(role, student=null) {
@@ -416,19 +424,12 @@ async function loadVideos() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Could not load videos.');
     list.replaceChildren();
-    if (!data.unlocked) {
-      const card = document.createElement('article'); card.className = 'session-card';
-      addText(card, 'strong', 'Videos are locked');
-      addText(card, 'p', 'Your current fee must be marked paid by the admin before lessons are available.');
-      const button = document.createElement('button'); button.className = 'secondary';
-      button.textContent = 'View my payment →'; button.onclick = () => show('student-fees');
-      card.append(button); list.append(card); return;
-    }
     if (!data.configured) { list.textContent = 'The institute is preparing the private video library.'; return; }
-    if (!data.videos.length) { list.textContent = 'No video lessons have been added yet.'; return; }
+    if (!data.videos.length) { list.textContent = 'Purchased lessons will appear here after payment approval and video setup.'; return; }
     for (const item of data.videos) {
       const card = document.createElement('article'); card.className = 'session-card video-card';
-      addText(card, 'strong', item.title);
+      addText(card, 'strong', item.level + ' · ' + item.title);
+      const status = addText(card, 'small', item.completed ? '✓ Watched' : 'Not completed');
       const button = document.createElement('button'); button.className = 'primary'; button.textContent = 'Watch lesson';
       const message = document.createElement('p'); message.setAttribute('role', 'status');
       button.onclick = async () => {
@@ -443,6 +444,16 @@ async function loadVideos() {
           player.src = new URL(result.url, mobileApp ? apiOrigin : location.origin).href;
           player.setAttribute('aria-label', item.title);
           player.onerror = () => { message.textContent = 'Video playback stopped. Open the lesson again to renew access.'; };
+          player.onended = async () => {
+            try {
+              const completed = await apiFetch('/api/videos/' + encodeURIComponent(item.id) + '/complete',
+                {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket:result.ticket})});
+              const resultData = await completed.json();
+              if (!completed.ok) throw new Error(resultData.error || 'Could not record completion.');
+              status.textContent = '✓ Watched'; message.textContent = 'Lesson complete. Check your level course for the final test.';
+              await loadVideoCourses();
+            } catch (error) { message.textContent = error.message; }
+          };
           card.append(player); message.textContent = '';
           player.play().catch(() => {});
         } catch (error) { message.textContent = error.message; }
@@ -452,6 +463,205 @@ async function loadVideos() {
     }
   } catch (error) { list.textContent = error.message; }
 }
+
+const courseLevels = ['Beginner','Level 1','Level 2','Level 3'];
+const courseKey = level => level.toLowerCase().replace(/\s+/g,'-');
+const readableDate = timestamp => timestamp ? new Date(timestamp).toLocaleDateString('en-IN',{dateStyle:'medium'}) : '—';
+async function loadVideoCourses() {
+  const output = $(portalRole === 'admin' ? 'admin-video-offers' : 'student-course-list');
+  output.textContent = 'Loading level courses…';
+  try {
+    const response = await apiFetch('/api/video-courses');
+    videoCourses = await response.json();
+    if (!response.ok) throw new Error(videoCourses.error || 'Could not load courses.');
+    if (portalRole === 'admin') renderAdminVideoCourses(); else renderStudentVideoCourses();
+  } catch (error) { output.textContent = error.message; }
+}
+function renderAdminVideoCourses() {
+  const offers = $('admin-video-offers'), orders = $('admin-video-orders');
+  offers.replaceChildren(); orders.replaceChildren();
+  courseLevels.forEach((level,index) => {
+    const offer = videoCourses.offers[index];
+    const form = document.createElement('form'); form.className = 'session-card course-form';
+    addText(form,'strong',level + (offer ? ' · ' + rupees(offer.amount_paise) : ' · price needed'));
+    const amount = document.createElement('input'); amount.type = 'number'; amount.min = '0.01'; amount.max = '1000000'; amount.step = '0.01'; amount.required = true; amount.placeholder = 'Price in ₹'; amount.value = offer ? (offer.amount_paise/100).toFixed(2) : '';
+    const upi = document.createElement('input'); upi.placeholder = 'UPI ID (optional if bank instructions entered)'; upi.value = offer?.upi_id || ''; upi.maxLength = 100;
+    const instructions = document.createElement('textarea'); instructions.placeholder = 'Bank payment instructions'; instructions.value = offer?.instructions || ''; instructions.maxLength = 300;
+    const message = document.createElement('small'); message.setAttribute('role','status');
+    const button = addText(form,'button','Save ' + level + ' price','primary'); button.type = 'submit';
+    form.insertBefore(amount,button); form.insertBefore(upi,button); form.insertBefore(instructions,button); form.append(message);
+    form.onsubmit = async event => {
+      event.preventDefault(); button.disabled = true; message.textContent = 'Saving…';
+      try {
+        const response = await apiFetch('/api/video-offers/' + courseKey(level), {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({level,amount:amount.value,upi_id:upi.value,instructions:instructions.value})});
+        const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Could not save price.');
+        await loadVideoCourses();
+      } catch (error) { message.textContent = error.message; }
+      finally { button.disabled = false; }
+    };
+    offers.append(form);
+  });
+  for (const order of videoCourses.orders) {
+    const card = document.createElement('article'); card.className = 'session-card';
+    addText(card,'strong',order.student_name + ' · ' + order.level + ' · ' + rupees(order.amount_paise));
+    addText(card,'p','Reference: ' + order.reference + ' · Submitted ' + readableDate(order.submitted_at));
+    addText(card,'span',order.status,'fee-status ' + order.status);
+    if (order.access_expires_at) addText(card,'p','Access until ' + readableDate(order.access_expires_at));
+    if (order.admin_note) addText(card,'p',order.admin_note);
+    if (order.status === 'pending') {
+      const check = document.createElement('label'); check.className = 'payment-check';
+      const box = document.createElement('input'); box.type = 'checkbox';
+      check.append(box,document.createTextNode(' I matched this amount and reference in the bank/UPI statement.'));
+      const note = document.createElement('textarea'); note.placeholder = 'Admin note (optional)'; note.maxLength = 300;
+      const message = addText(card,'small','');
+      const buttons = document.createElement('div'); buttons.className = 'fee-actions';
+      for (const status of ['paid','rejected']) {
+        const button = addText(buttons,'button',status === 'paid' ? 'Approve purchase' : 'Reject reference',status === 'paid' ? 'primary' : 'secondary');
+        button.onclick = async () => {
+          if (status === 'paid' && !box.checked) { message.textContent = 'Check the bank statement first.'; return; }
+          button.disabled = true;
+          try {
+            const response = await apiFetch('/api/video-orders/' + order.id + '/review', {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status,bank_verified:box.checked,note:note.value})});
+            const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Could not review purchase.');
+            await loadVideoCourses();
+          } catch (error) { message.textContent = error.message; }
+          finally { button.disabled = false; }
+        };
+      }
+      card.append(check,note,buttons);
+    }
+    orders.append(card);
+  }
+  if (!orders.children.length) addText(orders,'p','No level purchases submitted yet.');
+}
+function renderStudentVideoCourses() {
+  const list = $('student-course-list'); list.replaceChildren();
+  courseLevels.forEach((level,index) => {
+    const course = videoCourses.courses[index], offer = videoCourses.offers[index];
+    const card = document.createElement('article'); card.className = 'session-card course-card';
+    addText(card,'strong',level + (offer ? ' · ' + rupees(offer.amount_paise) : ' · price pending'));
+    if (course.active) addText(card,'p','Streaming access active until ' + readableDate(course.expires_at));
+    else if (course.expires_at) addText(card,'p','Access expired ' + readableDate(course.expires_at) + '. Buy again to renew.');
+    else addText(card,'p','Access starts when the admin verifies your payment and ends two months later.');
+    const pending = videoCourses.orders.find(order => order.level === level && order.status === 'pending');
+    if (pending) addText(card,'p','Reference ' + pending.reference + ' is awaiting admin verification.');
+    else if (offer && course.available) {
+      if (offer.upi_id) {
+        const link = addText(card,'a','Pay in UPI app','secondary');
+        link.href = 'upi://pay?' + new URLSearchParams({pa:offer.upi_id,pn:'Matrix Abacus',am:(offer.amount_paise/100).toFixed(2),cu:'INR'});
+      }
+      if (offer.instructions) addText(card,'p',offer.instructions);
+      const form = document.createElement('form'); form.className = 'course-form';
+      const reference = document.createElement('input'); reference.required = true; reference.minLength = 6; reference.maxLength = 60; reference.placeholder = 'UPI / bank reference';
+      const submit = addText(form,'button',course.active ? 'Renew two-month access' : 'Submit purchase reference','primary'); submit.type = 'submit';
+      const message = addText(form,'small',''); message.setAttribute('role','status');
+      form.insertBefore(reference,submit);
+      form.onsubmit = async event => {
+        event.preventDefault(); submit.disabled = true;
+        try {
+          const response = await apiFetch('/api/video-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({level,reference:reference.value})});
+          const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Could not submit reference.');
+          await loadVideoCourses();
+        } catch (error) { message.textContent = error.message; }
+        finally { submit.disabled = false; }
+      };
+      card.append(form);
+    } else if (!course.available) addText(card,'p','This level opens when your learning level advances.');
+    if (course.active) {
+      const button = addText(card,'button','Start ' + level + ' final test','secondary');
+      button.onclick = () => startFinalTest(level,card);
+      addText(card,'small','Available after every video in this level is marked watched.');
+    }
+    list.append(card);
+  });
+}
+
+async function loadCertificates() {
+  const list = $('profile-certificates'); list.textContent = 'Loading certificates…';
+  try {
+    const response = await apiFetch('/api/certificates'); const records = await response.json();
+    if (!response.ok) throw new Error(records.error || 'Could not load certificates.');
+    list.replaceChildren();
+    if (!records.length) { addText(list,'p','Complete a level’s videos and final test to earn a certificate.'); return; }
+    for (const record of records) {
+      const card = document.createElement('article'); card.className = 'session-card';
+      addText(card,'strong',record.level + ' certificate');
+      addText(card,'p','Issued ' + readableDate(record.issued_at));
+      const button = addText(card,'button','View certificate','secondary');
+      button.onclick = async () => {
+        const response = await apiFetch('/api/certificates/' + encodeURIComponent(record.id) + '.svg');
+        if (!response.ok) { button.textContent = 'Could not open certificate'; return; }
+        const blob = await response.blob();
+        if (certificateBlobUrl) URL.revokeObjectURL(certificateBlobUrl);
+        certificateBlobUrl = URL.createObjectURL(blob);
+        $('certificate-image').src = certificateBlobUrl;
+        $('save-certificate').href = certificateBlobUrl;
+        $('save-certificate').download = 'matrix-abacus-' + record.id + '.svg';
+        $('certificate-dialog').showModal();
+      };
+      list.append(card);
+    }
+  } catch (error) { list.textContent = error.message; }
+}
+$('close-certificate').onclick = () => {
+  $('certificate-dialog').close(); $('certificate-image').removeAttribute('src');
+  if (certificateBlobUrl) URL.revokeObjectURL(certificateBlobUrl);
+  certificateBlobUrl = null;
+};
+
+async function startFinalTest(level,card) {
+  if (finalTest) return;
+  const panel = $('final-test-panel');
+  const message = addText(card,'small','Starting timed test…');
+  try {
+    const started = performance.now();
+    const response = await apiFetch('/api/final-tests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({level})});
+    const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Could not start test.');
+    clearTimeout(finalPanelResetTimer);
+    clearInterval(challengeTimer); activeChallenge = null;
+    finalTest = result;
+    panel.classList.remove('hidden'); $('final-test-form').classList.remove('hidden');
+    $('practice-challenge-card').classList.add('hidden');
+    show('practice'); showFinalQuestion(started);
+    panel.scrollIntoView({behavior:'smooth',block:'center'});
+  } catch (error) { message.textContent = error.message; }
+}
+function showFinalQuestion(started) {
+  clearInterval(finalTimer);
+  $('final-test-title').textContent = finalTest.level + ' final test';
+  $('final-test-question').textContent = 'Question ' + finalTest.question + ' of 5: show ' + finalTest.target + ' on the abacus above, then check your answer.';
+  upper.fill(false); lower.fill(0); renderAbacus();
+  $('final-test-message').textContent = 'Answer before the timer ends. All five answers must be correct and on time.';
+  const deadline = started + finalTest.duration_seconds * 1000;
+  const tick = () => {
+    const remaining = Math.max(0,Math.ceil((deadline-performance.now())/1000));
+    $('final-test-time').textContent = remaining + 's';
+    if (remaining === 0) submitFinalAnswer(0);
+  };
+  tick(); if (finalTest) finalTimer = setInterval(tick,250);
+}
+async function submitFinalAnswer(answer) {
+  if (!finalTest || finalSaving) return;
+  finalSaving = true; clearInterval(finalTimer);
+  try {
+    const started = performance.now();
+    const response = await apiFetch('/api/final-tests/' + finalTest.id + '/answer',
+      {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({answer})});
+    const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Could not submit answer.');
+    if (result.finished) {
+      finalTest = null; $('final-test-form').classList.add('hidden');
+      $('final-test-time').textContent = 'Complete';
+      $('final-test-message').textContent = result.passed ?
+        'Passed! Your certificate is ready in your profile.' : 'This attempt ended. Watch the lessons and try the final test again.';
+      if (result.passed) await loadCertificates();
+      finalPanelResetTimer = setTimeout(() => { $('final-test-panel').classList.add('hidden'); $('final-test-form').classList.remove('hidden'); $('practice-challenge-card').classList.remove('hidden'); },8000);
+    } else { finalTest = {...finalTest,...result}; showFinalQuestion(started); }
+  } catch (error) { finalTest = null; $('final-test-message').textContent = error.message; $('practice-challenge-card').classList.remove('hidden'); }
+  finally { finalSaving = false; }
+}
+$('final-test-form').onsubmit = event => {
+  event.preventDefault(); submitFinalAnswer(value());
+};
 function renderSessions() {
   const list = $('session-list'); list.replaceChildren();
   $('session-count').textContent = sessions.length + (sessions.length === 1 ? ' session' : ' sessions');

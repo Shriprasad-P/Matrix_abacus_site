@@ -40,3 +40,12 @@
 @media(max-width:700px){.bead{width:48px}.lower-zone .active-stack,.lower-zone .inactive-stack{gap:2px}.lower-zone .active-stack{top:4px}.lower-zone .inactive-stack{bottom:4px}}
 .primary:disabled,.secondary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
 .video-list{margin-top:24px}.video-card{display:grid;gap:12px;justify-items:start}.video-card video{display:block;width:min(100%,760px);max-height:65vh;background:#15202d;border-radius:12px}.video-card p{margin:0;color:#a44239;font-size:13px}
+.course-form{display:grid;gap:10px;min-width:min(100%,280px)}
+.course-form input,.course-form textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid #d3d8e0;border-radius:10px;font:inherit}
+.course-card{align-items:flex-start;gap:10px}
+.video-card{align-items:flex-start;gap:10px}
+.video-card video{width:min(100%,720px);max-height:65vh;background:#111;border-radius:12px}
+#final-test-panel{margin-top:24px}
+#final-test-form{display:flex;flex-wrap:wrap;align-items:end;gap:14px}
+#final-test-form label{display:grid;gap:6px}
+#final-test-answer{width:180px;padding:12px;font:inherit;border:1px solid #d3d8e0;border-radius:10px}

@@ -15,7 +15,9 @@ const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 const phoneDigits = (value: string) => value.replace(/\D/g, '');
 const slotId = (slot: any) => `${slot.day}|${slot.start}|${slot.end}`;
 const videoMime = 'video/mp4';
-const videoChunkBytes = 8 * 1024 * 1024;
+const folderMime = 'application/vnd.google-apps.folder';
+const videoChunkBytes = 4 * 1024 * 1024;
+const levelKey = (level: string) => level.toLowerCase().replace(/\s+/g, '-');
 const id = () => Date.now() * 1000 + randomInt(1000);
 const col = (name: string) => database().collection(name);
 const list = async (name: string) => (await col(name).get()).docs.map(doc => doc.data());
@@ -173,18 +175,37 @@ function feeDetails(data: any) {
   return { label, amount_paise: Math.round(Number(amount) * 100), upi_id, instructions, due_date };
 }
 
-function videoEntitlement(student: any, cycleId: number | undefined, payment: any) {
-  return Boolean(student && !student.archived && student.approved_at && cycleId &&
-    cycleId >= student.first_fee_cycle_id && payment?.student_id === student.id &&
-    payment?.cycle_id === cycleId && payment?.status === 'paid');
+function addCalendarMonths(timestamp: number, months = 2) {
+  const start = new Date(timestamp);
+  const first = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + months, 1,
+    start.getUTCHours(), start.getUTCMinutes(), start.getUTCSeconds(), start.getUTCMilliseconds()));
+  const lastDay = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+  first.setUTCDate(Math.min(start.getUTCDate(), lastDay));
+  return first.getTime();
 }
 
-async function studentCanWatch(studentId: number) {
+function videoEntitlement(student: any, entitlement: any, level: string, at = Date.now()) {
+  return Boolean(student && !student.archived && student.approved_at && levels.includes(level) &&
+    entitlement?.student_id === student.id && entitlement?.level === level &&
+    Number(entitlement.expires_at) > at);
+}
+
+async function studentCanWatch(studentId: number, level: string) {
   const student = await one('abacus_students', studentId);
-  const cycleId = (await one('abacus_settings', 'fee'))?.current_id;
-  const latest = cycleId ? await one('abacus_payment_latest', `${studentId}_${cycleId}`) : null;
-  const payment = latest?.payment_id ? await one('abacus_fee_payments', latest.payment_id) : null;
-  return videoEntitlement(student, cycleId, payment);
+  const entitlement = await one('abacus_video_entitlements', `${studentId}_${levelKey(level)}`);
+  return videoEntitlement(student, entitlement, level);
+}
+
+function videoOfferDetails(data: any) {
+  const level = String(data.level || ''), amount = String(data.amount || '').trim();
+  const upi_id = String(data.upi_id || '').trim(), instructions = String(data.instructions || '').trim();
+  required(levels.includes(level), 'Choose a valid level.');
+  required(/^\d{1,7}(?:\.\d{1,2})?$/.test(amount) && Number(amount) > 0 && Number(amount) <= 1000000,
+    'Enter an amount from ₹0.01 to ₹10,00,000.');
+  required(!upi_id || (upi_id.length <= 100 && /^[\w.-]+@[\w.-]+$/.test(upi_id)), 'Enter a valid UPI ID.');
+  required(instructions.length <= 300 && Boolean(upi_id || instructions),
+    'Provide a UPI ID or bank payment instructions (up to 300 characters).');
+  return { level, amount_paise: Math.round(Number(amount) * 100), upi_id, instructions };
 }
 
 function lessonFolder() {
@@ -193,31 +214,37 @@ function lessonFolder() {
     ? folder : null;
 }
 
-async function driveVideo(fileId: string) {
-  const folder = lessonFolder();
-  required(Boolean(folder), 'Lesson videos are not configured', 503);
-  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size,parents,trashed&supportsAllDrives=true`, {
+async function driveFile(fileId: string, fields = 'id,name,mimeType,size,parents,trashed,videoMediaMetadata') {
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=${fields}&supportsAllDrives=true`, {
     headers: { Authorization: `Bearer ${await driveToken()}` }
   });
   required(response.ok, 'Video unavailable', response.status === 404 ? 404 : 502);
-  const file = await response.json();
-  required(!file.trashed && file.mimeType === videoMime && file.parents?.includes(folder) &&
-    Number(file.size) > 0 && Number(file.size) <= 2 * 1024 * 1024 * 1024,
-    'Video unavailable', 404);
-  return { id: file.id, title: String(file.name || 'Lesson').replace(/\.mp4$/i, '').slice(0, 120),
-    mimeType: videoMime, size: Number(file.size) };
+  return response.json();
 }
 
-async function listLessonVideos() {
+async function driveVideo(fileId: string) {
   const folder = lessonFolder();
-  if (!folder) return [];
+  required(Boolean(folder), 'Lesson videos are not configured', 503);
+  const file = await driveFile(fileId);
+  required(!file.trashed && file.mimeType === videoMime && file.parents?.length === 1 &&
+    Number(file.size) > 0 && Number(file.size) <= 2 * 1024 * 1024 * 1024,
+    'Video unavailable', 404);
+  const parent = await driveFile(file.parents[0], 'id,name,mimeType,parents,trashed');
+  required(!parent.trashed && parent.mimeType === folderMime && parent.parents?.includes(folder) &&
+    levels.includes(parent.name), 'Video unavailable', 404);
+  return { id: file.id, title: String(file.name || 'Lesson').replace(/\.mp4$/i, '').slice(0, 120),
+    mimeType: videoMime, size: Number(file.size), level: parent.name,
+    duration_ms: Number(file.videoMediaMetadata?.durationMillis) || 0 };
+}
+
+async function driveChildren(folder: string, mime: string) {
   const token = await driveToken();
   const files: any[] = [];
   let pageToken = '';
   do {
     const params = new URLSearchParams({
-      q: `'${folder}' in parents and trashed = false and mimeType = '${videoMime}'`,
-      fields: 'nextPageToken,files(id,name,mimeType,size)', pageSize: '1000',
+      q: `'${folder}' in parents and trashed = false and mimeType = '${mime}'`,
+      fields: 'nextPageToken,files(id,name,mimeType,size,videoMediaMetadata)', pageSize: '1000',
       orderBy: 'name', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true'
     });
     if (pageToken) params.set('pageToken', pageToken);
@@ -229,9 +256,20 @@ async function listLessonVideos() {
     files.push(...(page.files || []));
     pageToken = page.nextPageToken || '';
   } while (pageToken);
-  return files.filter(file => /^[\w-]+$/.test(file.id) && Number(file.size) > 0 &&
-      Number(file.size) <= 2 * 1024 * 1024 * 1024)
-    .map(file => ({ id: file.id, title: String(file.name || 'Lesson').replace(/\.mp4$/i, '').slice(0, 120) }));
+  return files;
+}
+
+async function listLessonVideos(level?: string) {
+  const folder = lessonFolder();
+  if (!folder) return [];
+  const folders = (await driveChildren(folder, folderMime)).filter(item => levels.includes(item.name) &&
+    (!level || item.name === level));
+  const groups = await Promise.all(folders.map(async item => ({ level: item.name,
+    files: await driveChildren(item.id, videoMime) })));
+  return groups.flatMap(group => group.files.filter(file => /^[\w-]+$/.test(file.id) &&
+      Number(file.size) > 0 && Number(file.size) <= 2 * 1024 * 1024 * 1024)
+    .map(file => ({ id: file.id, level: group.level,
+      title: String(file.name || 'Lesson').replace(/\.mp4$/i, '').slice(0, 120) })));
 }
 
 function videoRange(requested: string | null, size: number) {
@@ -253,7 +291,7 @@ async function streamLessonVideo(req: Request, fileId: string, origin: string) {
   const student = await one('abacus_students', play!.student_id);
   required(Boolean(session && session.role === 'student' && session.student_id === play!.student_id &&
     session.access_version === student?.access_version && session.expires > Date.now() &&
-    await studentCanWatch(play!.student_id)), 'Payment verification required', 403);
+    await studentCanWatch(play!.student_id, play!.level)), 'Active level purchase required', 403);
   const size = Number(play!.size);
   const { start, end } = videoRange(req.headers.get('range'), size);
   const upstream = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
@@ -267,6 +305,39 @@ async function streamLessonVideo(req: Request, fileId: string, origin: string) {
     'Content-Range': `bytes ${start}-${end}/${size}`, 'Accept-Ranges': 'bytes',
     'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'no-referrer',
+    ...(['capacitor://localhost', 'http://localhost'].includes(origin)
+      ? { 'Access-Control-Allow-Origin': origin } : {})
+  } });
+}
+
+function certificateSvg(certificate: any) {
+  const escape = (value: any) => String(value).replace(/[&<>"']/g, character =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[character]!));
+  const date = new Date(certificate.issued_at).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
+  });
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="850" viewBox="0 0 1200 850">
+  <rect width="1200" height="850" fill="#fffaf0"/><rect x="36" y="36" width="1128" height="778" rx="24" fill="none" stroke="#703820" stroke-width="6"/>
+  <rect x="54" y="54" width="1092" height="742" rx="18" fill="none" stroke="#d89b59" stroke-width="2"/>
+  <text x="600" y="158" text-anchor="middle" font-family="Arial,sans-serif" font-size="33" font-weight="700" fill="#703820">MATRIX ABACUS</text>
+  <text x="600" y="250" text-anchor="middle" font-family="Georgia,serif" font-size="54" fill="#282d37">Certificate of Completion</text>
+  <text x="600" y="340" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" fill="#596276">This certificate is awarded to</text>
+  <text x="600" y="425" text-anchor="middle" font-family="Arial,sans-serif" font-size="48" font-weight="700" fill="#703820">${escape(certificate.student_name)}</text>
+  <text x="600" y="505" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" fill="#596276">for completing the videos and timed final test for</text>
+  <text x="600" y="575" text-anchor="middle" font-family="Arial,sans-serif" font-size="42" font-weight="700" fill="#282d37">${escape(certificate.level)}</text>
+  <text x="600" y="685" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" fill="#596276">Issued ${escape(date)} · Certificate ${escape(certificate.id)}</text>
+  </svg>`;
+}
+
+async function certificateResponse(req: Request, certificateId: string, session: any, origin: string) {
+  requireRole(session);
+  const certificate = await one('abacus_certificates', certificateId);
+  required(Boolean(certificate && (session.role === 'admin' || certificate.student_id === session.student_id)),
+    'Certificate not found', 404);
+  return new Response(certificateSvg(certificate), { headers: {
+    'Content-Type': 'image/svg+xml; charset=utf-8', 'Content-Disposition': `inline; filename="matrix-abacus-${certificateId}.svg"`,
+    'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff',
+    'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
     ...(['capacitor://localhost', 'http://localhost'].includes(origin)
       ? { 'Access-Control-Allow-Origin': origin } : {})
   } });
@@ -381,9 +452,39 @@ async function getData(path: string, session: any) {
     }) };
   }
   if (path === '/api/videos') {
-    const unlocked = session.role === 'admin' || await studentCanWatch(session.student_id);
-    return { unlocked, configured: Boolean(lessonFolder()),
-      videos: unlocked ? await listLessonVideos() : [] };
+    const student = session.role === 'student' ? await one('abacus_students', session.student_id) : null;
+    const entitlements = student ? await Promise.all(levels.map(level =>
+      one('abacus_video_entitlements', `${student.id}_${levelKey(level)}`))) : [];
+    const activeLevels = new Set(levels.filter((level, index) =>
+      session.role === 'admin' || videoEntitlement(student, entitlements[index], level)));
+    const videos = lessonFolder() && activeLevels.size ? await listLessonVideos() : [];
+    const completed = student ? (await col('abacus_video_completions').where('student_id', '==', student.id).get())
+      .docs.map(doc => doc.data().video_id) : [];
+    return { configured: Boolean(lessonFolder()), videos: videos.filter(video => activeLevels.has(video.level))
+      .map(video => ({ ...video, completed: completed.includes(video.id) })) };
+  }
+  if (path === '/api/video-courses') {
+    const offers = await Promise.all(levels.map(level => one('abacus_video_offers', levelKey(level))));
+    if (session.role === 'admin') {
+      const [orders, students] = await Promise.all([list('abacus_video_orders'), list('abacus_students')]);
+      return { offers, orders: order(orders).map(item => ({ ...item,
+        student_name: students.find(student => student.id === item.student_id)?.name || 'Unknown student' })) };
+    }
+    const student = await one('abacus_students', session.student_id);
+    const entitlements = await Promise.all(levels.map(level =>
+      one('abacus_video_entitlements', `${student!.id}_${levelKey(level)}`)));
+    const orders = order((await col('abacus_video_orders').where('student_id', '==', student!.id).get())
+      .docs.map(doc => doc.data()));
+    return { offers, orders, courses: levels.map((level, index) => ({ level,
+      available: index <= levels.indexOf(student!.level),
+      expires_at: entitlements[index]?.expires_at || null,
+      active: videoEntitlement(student, entitlements[index], level) })) };
+  }
+  if (path === '/api/certificates') {
+    const certificates = session.role === 'admin' ? await list('abacus_certificates') :
+      (await col('abacus_certificates').where('student_id', '==', session.student_id).get())
+        .docs.map(doc => doc.data());
+    return certificates.sort((a, b) => b.issued_at.localeCompare(a.issued_at));
   }
   if (path === '/api/worksheets') {
     const student = session.role === 'student' ? await one('abacus_students', session.student_id) : null;
@@ -417,15 +518,125 @@ async function postData(path: string, req: Request, session: any): Promise<[any,
   const videoMatch = path.match(/^\/api\/videos\/([\w-]+)\/play$/);
   if (videoMatch) {
     requireRole(session, 'student');
-    required(await studentCanWatch(session.student_id), 'Payment verification required to watch videos', 403);
     const video = await driveVideo(videoMatch[1]);
+    required(await studentCanWatch(session.student_id, video.level),
+      'Purchase for this level is not active', 403);
     const token = randomBytes(32).toString('base64url');
     await col('abacus_video_tickets').doc(hash(token)).set({
-      student_id: session.student_id, video_id: video.id, size: video.size,
+      student_id: session.student_id, video_id: video.id, level: video.level, size: video.size,
+      started_at: Date.now(), duration_ms: video.duration_ms,
       session_hash: hash(sessionToken(req)!), expires: Date.now() + 2 * 60 * 60 * 1000,
       expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000)
     });
-    return [{ url: `/api/videos/${video.id}/stream?ticket=${token}` }, 200];
+    return [{ url: `/api/videos/${video.id}/stream?ticket=${token}`, ticket: token }, 200];
+  }
+  const completeMatch = path.match(/^\/api\/videos\/([\w-]+)\/complete$/);
+  if (completeMatch) {
+    requireRole(session, 'student');
+    const ticket = String((await input(req)).ticket || '');
+    required(/^[\w-]{40,}$/.test(ticket), 'Video session required', 401);
+    const play = await one('abacus_video_tickets', hash(ticket));
+    required(Boolean(play && play.video_id === completeMatch[1] && play.student_id === session.student_id &&
+      play.session_hash === hash(sessionToken(req)!) && play.expires > Date.now()),
+    'Video session expired', 401);
+    required(await studentCanWatch(session.student_id, play!.level), 'Purchase for this level has expired', 403);
+    const minimum = play!.duration_ms > 0 ? Math.ceil(play!.duration_ms * 0.9) : 30000;
+    required(Date.now() - play!.started_at >= minimum, 'Finish watching the lesson before marking it complete', 409);
+    const completion = { id: `${session.student_id}_${completeMatch[1]}`, student_id: session.student_id,
+      video_id: completeMatch[1], level: play!.level, completed_at: now() };
+    await col('abacus_video_completions').doc(completion.id).set(completion);
+    return [{ completed: true }, 200];
+  }
+  if (path === '/api/video-orders') {
+    requireRole(session, 'student');
+    const details = await input(req);
+    const level = String(details.level || '');
+    const reference = String(details.reference || '').trim().toUpperCase();
+    required(levels.includes(level), 'Choose a valid level.');
+    required(/^[A-Z0-9][A-Z0-9_/-]{5,59}$/.test(reference), 'Enter a 6–60 character UPI or bank reference.');
+    const orderId = id();
+    const result = await database().runTransaction(async tx => {
+      const student = (await tx.get(col('abacus_students').doc(String(session.student_id)))).data();
+      const offer = (await tx.get(col('abacus_video_offers').doc(levelKey(level)))).data();
+      const pendingRef = col('abacus_video_pending').doc(`${session.student_id}_${levelKey(level)}`);
+      const pending = (await tx.get(pendingRef)).data();
+      const referenceRef = col('abacus_payment_references').doc(reference);
+      const used = await tx.get(referenceRef);
+      required(Boolean(student && !student.archived && levels.indexOf(level) <= levels.indexOf(student!.level)),
+        'This level is not yet available to the student', 403);
+      required(Boolean(offer?.amount_paise && (offer.upi_id || offer.instructions)),
+        'The institute has not set this level price', 409);
+      required(!pending || pending.status !== 'pending', 'A payment for this level is already awaiting review', 409);
+      required(!used.exists, 'This reference has already been submitted', 409);
+      const order = { id: orderId, student_id: session.student_id, level, reference,
+        amount_paise: offer!.amount_paise, status: 'pending', submitted_at: now(),
+        reviewed_at: null, admin_note: '', access_expires_at: null };
+      tx.create(col('abacus_video_orders').doc(String(orderId)), order);
+      tx.create(referenceRef, { video_order_id: orderId });
+      tx.set(pendingRef, { order_id: orderId, status: 'pending' });
+      return order;
+    });
+    return [result, 201];
+  }
+  if (path === '/api/final-tests') {
+    requireRole(session, 'student');
+    const level = String((await input(req)).level || '');
+    required(levels.includes(level), 'Choose a valid level.');
+    required(await studentCanWatch(session.student_id, level), 'An active purchase is required for the final test', 403);
+    const videos = await listLessonVideos(level);
+    required(videos.length > 0, 'The institute has not added this level’s videos yet', 409);
+    const completed = (await col('abacus_video_completions').where('student_id', '==', session.student_id).get())
+      .docs.map(doc => doc.data().video_id);
+    required(videos.every(video => completed.includes(video.id)), 'Watch every video in this level first', 409);
+    const testId = id(), [minimum, maximum, duration] = challengeRules[level];
+    const started = Date.now();
+    const test = { id: testId, student_id: session.student_id, level, index: 0, correct: 0,
+      target: randomInt(minimum, maximum + 1), duration_seconds: duration,
+      deadline_at: started + duration * 1000, started_at: started,
+      finished_at: null, passed: false };
+    await col('abacus_final_tests').doc(String(testId)).create(test);
+    return [{ id: testId, level, question: 1, total: 5, target: test.target,
+      duration_seconds: duration }, 201];
+  }
+  const testMatch = path.match(/^\/api\/final-tests\/(\d+)\/answer$/);
+  if (testMatch) {
+    requireRole(session, 'student');
+    const { answer } = await input(req);
+    required(Number.isInteger(answer) && answer >= 0 && answer <= 9999, 'Answer must be 0–9999.');
+    const testId = Number(testMatch[1]);
+    const result = await database().runTransaction(async tx => {
+      const testRef = col('abacus_final_tests').doc(String(testId));
+      const test = (await tx.get(testRef)).data();
+      required(Boolean(test && test.student_id === session.student_id && !test.finished_at),
+        'Final test is no longer active', 409);
+      const student = (await tx.get(col('abacus_students').doc(String(session.student_id)))).data();
+      const entitlement = (await tx.get(col('abacus_video_entitlements').doc(
+        `${session.student_id}_${levelKey(test!.level)}`))).data();
+      required(videoEntitlement(student, entitlement, test!.level), 'Level access has expired', 403);
+      const correct = answer === test!.target && Date.now() <= test!.deadline_at;
+      const nextIndex = test!.index + 1;
+      if (!correct || nextIndex === 5) {
+        const passed = correct && nextIndex === 5;
+        const finishedAt = now();
+        const certificateId = `${session.student_id}_${levelKey(test!.level)}`;
+        const certificateRef = col('abacus_certificates').doc(certificateId);
+        const prior = passed ? await tx.get(certificateRef) : null;
+        tx.update(testRef, { finished_at: finishedAt, passed, correct: test!.correct + Number(correct), index: nextIndex });
+        if (passed && !prior?.exists) tx.create(certificateRef, {
+          id: certificateId, student_id: session.student_id, student_name: student!.name,
+          level: test!.level, issued_at: finishedAt, test_id: testId
+        });
+        return { finished: true, passed, correct, completed: test!.correct + Number(correct),
+          total: 5, certificate_id: passed ? certificateId : null };
+      }
+      const [minimum, maximum, duration] = challengeRules[test!.level];
+      const target = randomInt(minimum, maximum + 1);
+      tx.update(testRef, { index: nextIndex, correct: test!.correct + 1,
+        target, deadline_at: Date.now() + duration * 1000 });
+      return { finished: false, correct: true, question: nextIndex + 1, total: 5,
+        target, duration_seconds: duration };
+    });
+    return [result, 200];
   }
   if (path === '/api/students') {
     requireRole(session, 'admin');
@@ -608,6 +819,48 @@ async function postData(path: string, req: Request, session: any): Promise<[any,
 
 async function putData(path: string, req: Request, session: any): Promise<any> {
   requireRole(session);
+  const offerMatch = path.match(/^\/api\/video-offers\/(beginner|level-[123])$/);
+  if (offerMatch) {
+    requireRole(session, 'admin');
+    const offer = videoOfferDetails(await input(req));
+    required(levelKey(offer.level) === offerMatch[1], 'Level does not match the offer URL.');
+    await col('abacus_video_offers').doc(offerMatch[1]).set({ ...offer, updated_at: now() });
+    return offer;
+  }
+  const orderMatch = path.match(/^\/api\/video-orders\/(\d+)\/review$/);
+  if (orderMatch) {
+    requireRole(session, 'admin');
+    const data = await input(req);
+    const status = data.status, note = String(data.note || '').trim();
+    required(['paid', 'rejected'].includes(status) && note.length <= 300,
+      'Choose paid or rejected and keep the note under 300 characters.');
+    required(status !== 'paid' || data.bank_verified === true,
+      'Confirm that the bank or UPI statement matches before marking paid.');
+    const orderId = Number(orderMatch[1]);
+    return database().runTransaction(async tx => {
+      const orderRef = col('abacus_video_orders').doc(String(orderId));
+      const order = (await tx.get(orderRef)).data();
+      required(Boolean(order && order.status === 'pending'), 'Only pending purchases can be reviewed', 409);
+      const student = (await tx.get(col('abacus_students').doc(String(order!.student_id)))).data();
+      required(Boolean(student && (status === 'rejected' || !student.archived)),
+        'Student is not active', 409);
+      const entitlementRef = col('abacus_video_entitlements').doc(
+        `${order!.student_id}_${levelKey(order!.level)}`);
+      const entitlement = status === 'paid' ? (await tx.get(entitlementRef)).data() : null;
+      const verifiedAt = Date.now();
+      const expiresAt = status === 'paid' ? addCalendarMonths(
+        Math.max(verifiedAt, Number(entitlement?.expires_at) || 0)) : null;
+      tx.update(orderRef, { status, admin_note: note, reviewed_at: new Date(verifiedAt).toISOString(),
+        access_expires_at: expiresAt });
+      tx.set(col('abacus_video_pending').doc(`${order!.student_id}_${levelKey(order!.level)}`),
+        { order_id: orderId, status });
+      if (status === 'paid') tx.set(entitlementRef, {
+        student_id: order!.student_id, level: order!.level, expires_at: expiresAt,
+        updated_at: new Date(verifiedAt).toISOString(), order_id: orderId
+      });
+      return { status, access_expires_at: expiresAt };
+    });
+  }
   if (path === '/api/schedule/settings') {
     requireRole(session, 'admin');
     const settings = scheduleDetails(await input(req));
@@ -733,6 +986,9 @@ export default async (req: Request, context: Context) => {
       return reply(body, 200, origin, { 'Set-Cookie': `abacus_session=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800` });
     }
     const session = await identity(req);
+    const certificateMatch = path.match(/^\/api\/certificates\/([\w-]+)\.svg$/);
+    if (req.method === 'GET' && certificateMatch)
+      return await certificateResponse(req, certificateMatch[1], session, origin);
     if (req.method === 'GET') return reply(await getData(path, session), 200, origin);
     if (req.method === 'POST' && path === '/api/logout') {
       const cookie = req.headers.get('cookie')?.match(/(?:^|; )abacus_session=([^;]+)/)?.[1];
@@ -756,4 +1012,5 @@ export default async (req: Request, context: Context) => {
 
 export const config: Config = { path: '/api/*', excludedPath: '/api/media/*' };
 
-export { feeDetails, worksheetDetails, scheduleDetails, videoEntitlement, videoRange };
+export { feeDetails, worksheetDetails, scheduleDetails, videoEntitlement, videoOfferDetails,
+  addCalendarMonths, videoRange };
