@@ -22,12 +22,13 @@ test('open scheduling requires two distinct days and unique slots', () => {
 });
 
 test('video access requires an active student and a paid current fee', () => {
-  const student = { id: 1001, archived: false, first_fee_cycle_id: 42 };
+  const student = { id: 1001, archived: false, approved_at: '2026-10-12T00:00:00Z', first_fee_cycle_id: 42 };
   const paid = { student_id: 1001, cycle_id: 42, status: 'paid' };
   assert.equal(videoEntitlement(student, 42, paid), true);
   assert.equal(videoEntitlement(student, 42, { ...paid, status: 'pending' }), false);
   assert.equal(videoEntitlement(student, 43, paid), false);
   assert.equal(videoEntitlement({ ...student, archived: true }, 42, paid), false);
+  assert.equal(videoEntitlement({ ...student, approved_at: null }, 42, paid), false);
   assert.equal(videoEntitlement(student, 42, { ...paid, student_id: 1002 }), false);
 });
 

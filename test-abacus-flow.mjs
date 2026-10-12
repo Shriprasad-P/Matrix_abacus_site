@@ -30,9 +30,11 @@ test('admin and student flows keep scoring, seats, and payments on the server', 
   const studentId = added.data.id;
   assert.equal(added.data.access_code, undefined);
   assert.equal((await call('/api/login/student', 'POST',
-    { student_id: studentId, password: '0000000000' }, null, true)).status, 401);
+    { phone: '9999999999', password: '0000000000' }, null, true)).status, 401);
+  assert.equal((await call('/api/login/student', 'POST',
+    { phone: '7777777777', password: '7777777777' }, null, true)).status, 401);
   const studentLogin = await call('/api/login/student', 'POST',
-    { student_id: studentId, password: '9999999999' }, null, true);
+    { phone: '9999999999', password: '9999999999' }, null, true);
   assert.equal(studentLogin.status, 200);
   const student = studentLogin.data.token;
   assert.equal((await call('/api/videos', 'GET', null, student, true)).data.unlocked, false);
@@ -76,7 +78,7 @@ test('admin and student flows keep scoring, seats, and payments on the server', 
     name: 'Second Pilot', age: 9, guardian: 'Second Guardian', phone: '8888888888', level: 'Beginner'
   }, admin);
   const secondLogin = await call('/api/login/student', 'POST',
-    { student_id: second.data.id, password: '8888888888' }, null, true);
+    { phone: '8888888888', password: '8888888888' }, null, true);
   assert.equal((await call('/api/schedule/my', 'PUT',
     { slot_ids: ['1|16:00|17:00', '3|16:00|17:00'] }, secondLogin.data.token, true)).status, 409);
   const worksheet = await call('/api/worksheets', 'POST',
@@ -87,14 +89,28 @@ test('admin and student flows keep scoring, seats, and payments on the server', 
   const review = await call('/api/worksheets/' + attempt.data.id + '/review', 'PUT',
     { progress: 25, note: 'Good' }, admin);
   assert.equal(review.data.progress, 25);
+  const sibling = await call('/api/students', 'POST', {
+    name: 'Sibling Pilot', age: 7, guardian: 'Pilot Guardian', phone: '9999999999', level: 'Beginner'
+  }, admin);
+  const choice = await call('/api/login/student', 'POST',
+    { phone: '9999999999', password: '9999999999' }, null, true);
+  assert.equal(choice.data.choose_student, true);
+  assert.equal(choice.data.token, undefined);
+  assert.deepEqual(choice.data.students.map(item => item.id).sort(), [studentId, sibling.data.id].sort());
+  assert.equal((await call('/api/login/student', 'POST',
+    { phone: '9999999999', password: '9999999999', student_id: second.data.id }, null, true)).status, 401);
+  const siblingLogin = await call('/api/login/student', 'POST',
+    { phone: '9999999999', password: '9999999999', student_id: sibling.data.id }, null, true);
+  assert.equal(siblingLogin.status, 200);
+  assert.equal((await call('/api/me', 'GET', null, siblingLogin.data.token, true)).data.student.id, sibling.data.id);
   await call('/api/students/' + studentId, 'PUT', {
     name: 'Pilot Student', age: 9, guardian: 'Pilot Guardian', phone: '7777777777', level: 'Level 1'
   }, admin);
   assert.equal((await call('/api/me', 'GET', null, student, true)).status, 401);
   assert.equal((await call('/api/login/student', 'POST',
-    { student_id: studentId, password: '9999999999' }, null, true)).status, 401);
+    { phone: '9999999999', password: '9999999999', student_id: studentId }, null, true)).status, 401);
   const updatedLogin = await call('/api/login/student', 'POST',
-    { student_id: studentId, password: '7777777777' }, null, true);
+    { phone: '7777777777', password: '7777777777' }, null, true);
   assert.equal(updatedLogin.status, 200);
   await call('/api/students/' + studentId + '/archive', 'POST', { archived: true }, admin);
   assert.equal((await call('/api/me', 'GET', null, updatedLogin.data.token, true)).status, 401);

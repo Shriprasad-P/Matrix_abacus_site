@@ -59,6 +59,17 @@ async function signIn(path, payload) {
     const response = await apiFetch(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Sign-in failed.');
+    if (result.choose_student) {
+      const choice = $('student-choice'); choice.replaceChildren();
+      result.students.forEach(student => {
+        const option = document.createElement('option');
+        option.value = student.id; option.textContent = student.name + ' · Age ' + student.age;
+        choice.append(option);
+      });
+      $('student-choice-label').classList.remove('hidden');
+      $('portal-error').textContent = 'Choose a student profile and tap Sign in again.';
+      return;
+    }
     if (mobileApp) mobileToken = result.token;
     if (result.role === 'admin') enterPortal('admin');
     else {
@@ -69,7 +80,17 @@ async function signIn(path, payload) {
   } catch (error) { $('portal-error').textContent = error.message; }
 }
 $('admin-login').onsubmit = event => { event.preventDefault(); signIn('/api/login/admin',{password:$('admin-password').value}); };
-$('student-login').onsubmit = event => { event.preventDefault(); signIn('/api/login/student',{student_id:$('student-id').value,password:$('student-password').value}); };
+$('student-login').onsubmit = event => {
+  event.preventDefault();
+  signIn('/api/login/student', { phone:$('student-phone').value,
+    password:$('student-password').value,
+    ...(!$('student-choice-label').classList.contains('hidden') ?
+      { student_id:$('student-choice').value } : {}) });
+};
+for (const field of ['student-phone', 'student-password']) $(field).addEventListener('input', () => {
+  $('student-choice-label').classList.add('hidden');
+  $('student-choice').replaceChildren();
+});
 $('switch-portal').onclick = async () => { await apiFetch('/api/logout',{method:'POST'}); location.reload(); };
 async function restoreSession() {
   if (mobileApp) return;
@@ -306,7 +327,7 @@ function openStudentForm(student=null) {
   editingStudent = student;
   const form = $('student-form'); form.reset();
   $('student-dialog-title').textContent = student ? 'Edit student' : 'Add a student';
-  $('student-save-button').textContent = student ? 'Save changes' : 'Save student';
+  $('student-save-button').textContent = student ? 'Save changes' : 'Add and approve student';
   if (student) for (const key of ['name','age','guardian','phone','level']) form.elements[key].value = student[key];
   $('form-error').textContent = '';
   $('student-dialog').showModal();
@@ -322,13 +343,14 @@ $('student-form').onsubmit = async event => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Could not save student.');
     form.reset(); $('student-dialog').close(); show('students'); await loadStudents();
-    if (!editingStudent) showCredentials(result.id,result.phone);
+    if (!editingStudent) showCredentials(result.phone);
     editingStudent = null;
   } catch (error) { $('form-error').textContent = error.message; }
 };
-function showCredentials(id, phone) {
-  $('new-student-id').textContent = id;
-  $('new-student-phone').textContent = phone.replace(/\D/g, '');
+function showCredentials(phone) {
+  const digits = phone.replace(/\D/g, '');
+  $('new-student-id').textContent = digits;
+  $('new-student-phone').textContent = digits;
   $('code-dialog').showModal();
 }
 $('close-code').onclick = $('done-code').onclick = () => $('code-dialog').close();
@@ -355,7 +377,7 @@ function renderStudentHome() {
   if (!currentStudent) return;
   $('student-welcome').textContent = 'Hi, ' + currentStudent.name.split(/\s+/)[0] + '! 👋';
   $('profile-name').textContent = currentStudent.name;
-  $('profile-level').textContent = currentStudent.level + ' · Student ID ' + currentStudent.id;
+  $('profile-level').textContent = currentStudent.level;
   $('my-progress').value = currentStudent.progress;
   $('my-progress-text').textContent = currentStudent.progress + '%';
   $('profile-checkpoint').textContent = checkpoint(currentStudent.progress);
@@ -598,7 +620,7 @@ function openReceipt(payment) {
   const details = $('receipt-details'); details.replaceChildren();
   addText(details,'strong','Matrix Abacus');
   addText(details,'p','Receipt AI-' + String(payment.id).padStart(6,'0'));
-  addText(details,'p','Student: ' + currentStudent.name + ' · ID ' + currentStudent.id);
+  addText(details,'p','Student: ' + currentStudent.name + ' · Record ' + currentStudent.id);
   addText(details,'p','Fee: ' + payment.label + ' · ' + rupees(payment.amount_paise));
   if (payment.due_date) addText(details,'p','Due date: ' + payment.due_date);
   addText(details,'p','Reference: ' + payment.reference);

@@ -1,6 +1,6 @@
 # Matrix Abacus website and media
 
-The Student and Admin portal source remains in `app/` for the mobile application, but it is not published on the public website. Admins add students with a guardian phone number; students sign in with their student ID and that phone number as the permanent password. Changing the phone number signs out active student sessions. Phone numbers are easy to guess or learn, so replace this password rule with a stronger sign-in method before enrolling real students at scale.
+The Student and Admin portal source remains in `app/` for the mobile application, but it is not published on the public website. Only an admin can add and approve a student; there is no student self-registration. Students enter the registered guardian phone number in both the login ID and password fields. Siblings sharing a phone number choose their student profile after entering it. Changing the registered number signs out that student's active sessions, and archiving a student blocks sign-in. A phone number is easy to guess or learn, so replace this password rule with a stronger sign-in method before enrolling real students at scale.
 
 The website runs on Netlify. Its gallery and public PDF downloads can be managed by uploading files to one dedicated Google Drive folder. The owner does not need to edit this repository after the one-time setup.
 

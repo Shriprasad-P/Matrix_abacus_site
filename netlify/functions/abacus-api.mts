@@ -72,7 +72,8 @@ async function identity(req: Request) {
   if (!session || session.expires <= Date.now()) return null;
   if (session.role === 'student') {
     const student = await one('abacus_students', session.student_id);
-    if (!student || student.archived || student.access_version !== session.access_version) return null;
+    if (!student || student.archived || !student.approved_at ||
+      student.access_version !== session.access_version) return null;
   }
   return session;
 }
@@ -118,14 +119,23 @@ async function login(req: Request, path: string, ip: string) {
     required(typeof data.password === 'string' && matchSecret(data.password, password!), 'Incorrect admin password', 401);
   } else {
     role = 'student';
-    studentId = Number(data.student_id);
-    const student = Number.isSafeInteger(studentId) && studentId > 0
-      ? await one('abacus_students', studentId) : null;
-    const candidate = typeof data.password === 'string' ? phoneDigits(data.password) : '';
-    required(Boolean(student && !student.archived && candidate &&
-      matchSecret(candidate, phoneDigits(student.phone))),
-      'Invalid student ID or phone number', 401);
-    accessVersion = student.access_version;
+    const loginPhone = typeof data.phone === 'string' ? phoneDigits(data.phone) : '';
+    const password = typeof data.password === 'string' ? phoneDigits(data.password) : '';
+    required(Boolean(loginPhone.length >= 7 && loginPhone.length <= 15 &&
+      password && matchSecret(loginPhone, password)), 'Invalid phone number or password', 401);
+    const matching = (await col('abacus_students').where('phone_digits', '==', loginPhone).get())
+      .docs.map(doc => doc.data()).filter(student => !student.archived && student.approved_at);
+    required(matching.length > 0, 'Invalid phone number or password', 401);
+    if (matching.length > 1 && data.student_id === undefined) {
+      await releaseLoginSlot(ip);
+      return { choose_student: true,
+        students: matching.map(student => ({ id: student.id, name: student.name, age: student.age })) };
+    }
+    const selected = data.student_id === undefined ? matching[0] :
+      matching.find(student => student.id === Number(data.student_id));
+    required(Boolean(selected), 'Invalid phone number or password', 401);
+    studentId = selected.id;
+    accessVersion = selected.access_version;
   }
   const token = randomBytes(32).toString('base64url');
   await col('abacus_sessions').doc(hash(token)).set({
@@ -144,7 +154,7 @@ function studentDetails(data: any) {
   required(phone.length <= 20 && /^[+\d ()-]+$/.test(phone) &&
     phoneDigits(phone).length >= 7 && phoneDigits(phone).length <= 15, 'Enter a valid phone number.');
   required(levels.includes(level), 'Choose a valid level.');
-  return { name, guardian, phone, age, level };
+  return { name, guardian, phone, phone_digits: phoneDigits(phone), age, level };
 }
 
 function feeDetails(data: any) {
@@ -164,7 +174,7 @@ function feeDetails(data: any) {
 }
 
 function videoEntitlement(student: any, cycleId: number | undefined, payment: any) {
-  return Boolean(student && !student.archived && cycleId &&
+  return Boolean(student && !student.archived && student.approved_at && cycleId &&
     cycleId >= student.first_fee_cycle_id && payment?.student_id === student.id &&
     payment?.cycle_id === cycleId && payment?.status === 'paid');
 }
@@ -312,7 +322,8 @@ async function getData(path: string, session: any) {
   }
   if (path === '/api/students') {
     requireRole(session, 'admin');
-    return order(await list('abacus_students')).map(({ access_salt, access_hash, first_fee_cycle_id, mastery_streak, ...student }) => student);
+    return order(await list('abacus_students')).map(({ access_salt, access_hash, first_fee_cycle_id,
+      mastery_streak, phone_digits, ...student }) => student);
   }
   if (path === '/api/sessions') {
     const students = await list('abacus_students');
@@ -426,13 +437,14 @@ async function postData(path: string, req: Request, session: any): Promise<[any,
       const fee = (await tx.get(feeRef)).data();
       const studentId = count?.next || 1001;
       const value = { id: studentId, ...details, progress: 0, mastery_streak: 0, archived: false,
+        approved_at: now(),
         access_version: 1,
         first_fee_cycle_id: fee?.current_id || 0, created_at: now(), active_challenge_id: null };
       tx.create(col('abacus_students').doc(String(studentId)), value);
       tx.set(countRef, { next: studentId + 1 });
       return value;
     });
-    const { access_version, first_fee_cycle_id, active_challenge_id, ...publicStudent } = student;
+    const { access_version, first_fee_cycle_id, active_challenge_id, phone_digits, ...publicStudent } = student;
     return [publicStudent, 201];
   }
   if (path === '/api/fees') {
@@ -653,7 +665,7 @@ async function putData(path: string, req: Request, session: any): Promise<any> {
       tx.update(ref, { ...details, progress: details.level === current!.level ? current!.progress : 0,
         mastery_streak: details.level === current!.level ? current!.mastery_streak : 0,
         active_challenge_id: details.level === current!.level ? current!.active_challenge_id : null,
-        access_version: details.phone === current!.phone ? current!.access_version : current!.access_version + 1 });
+        access_version: details.phone_digits === current!.phone_digits ? current!.access_version : current!.access_version + 1 });
     });
     return { id: studentId };
   }
@@ -715,6 +727,7 @@ export default async (req: Request, context: Context) => {
       return await streamLessonVideo(req, streamMatch[1], origin);
     if (req.method === 'POST' && ['/api/login/admin', '/api/login/student'].includes(path)) {
       const result = await login(req, path, context.ip);
+      if ('choose_student' in result) return reply(result, 200, origin);
       if (origin === 'capacitor://localhost' || origin === 'http://localhost') return reply(result, 200, origin);
       const { token, ...body } = result;
       return reply(body, 200, origin, { 'Set-Cookie': `abacus_session=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800` });
