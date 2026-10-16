@@ -7,10 +7,10 @@ The website runs on Netlify. Its gallery and public PDF downloads can be managed
 ## One-time setup
 
 1. Create a Google Drive folder **only for public website images and PDFs**. Do not put private student or payment records in it.
-2. In Google Cloud, enable the Drive API and create a service account with a JSON key. Share the folder with the service account email as **Viewer**.
+2. In Google Cloud, enable the Drive API. Share the folder with the service account email as **Viewer**. The existing Firebase Admin service account can be reused for this if it is already configured on Netlify; otherwise create a dedicated Google service account with a JSON key.
 3. In the Netlify site's environment variables, set:
    - `DRIVE_MEDIA_FOLDER_ID`: the ID between `/folders/` and the next `?` in the folder URL.
-   - `GOOGLE_SERVICE_ACCOUNT_JSON`: the complete JSON key contents. Keep this secret; never put it in Git or Drive.
+   - `GOOGLE_SERVICE_ACCOUNT_JSON`: optional when `FIREBASE_SERVICE_ACCOUNT_JSON` is already configured. If using a dedicated Google service account, set this to its complete JSON key. Keep keys secret; never put them in Git or Drive.
 4. Publish the site, then wait for the daily sync at **09:30 India time** (04:00 UTC). The first sync publishes up to six images. Netlify Functions and Blobs must be enabled on the site.
 
 Until these settings are present, the existing images and PDFs continue to appear. The full gallery uses the same published image list as the homepage.
@@ -38,8 +38,8 @@ Trigger a new deploy after saving the variables. The API is then available at `h
 ## Private lesson videos
 
 1. In the institute's Google Drive, create a **separate private folder** for lesson videos. Inside it, create exactly four subfolders named `Beginner`, `Level 1`, `Level 2`, and `Level 3`. Keep link sharing restricted; do not use the public website media folder.
-2. Share the parent folder with the service account email in `GOOGLE_SERVICE_ACCOUNT_JSON` as **Viewer**. Upload MP4 videos encoded with H.264 video and AAC audio for iOS and Android playback into the matching level subfolder. Keep each file below 2 GB. Each video should have a detectable duration and be at least 30 seconds long so its completion can be recorded.
-3. In Netlify, set `DRIVE_LESSON_VIDEO_FOLDER_ID` for **Production** to the ID in the private folder URL. Keep the existing `GOOGLE_SERVICE_ACCOUNT_JSON` available to Functions, then redeploy.
+2. Share the parent folder as **Viewer** with the service account named in `GOOGLE_SERVICE_ACCOUNT_JSON`, or the one in `FIREBASE_SERVICE_ACCOUNT_JSON` when a dedicated Google key is not set. Upload MP4 videos encoded with H.264 video and AAC audio for iOS and Android playback into the matching level subfolder. Keep each file below 2 GB. Each video should have a detectable duration and be at least 30 seconds long so its completion can be recorded.
+3. In Netlify, set `DRIVE_LESSON_VIDEO_FOLDER_ID` for **Production** to the ID in the private folder URL. Keep the existing service account variable available to Functions, then redeploy.
 
 The owner adds or removes lessons by changing files in the level subfolders; video titles come from filenames. In the Admin app, set a separate price and UPI/bank instructions for each level. A student submits a payment reference for a level; the admin checks the bank/UPI statement and approves it. Approval unlocks streaming for **two calendar months**, starting at approval. An early renewal adds two months to the existing expiry. Tuition fees remain separate. Pending, rejected, and expired video purchases do not unlock lessons. The API checks the purchased level again for each playback request, and the video URL expires after two hours. The app streams; it does not save offline copies. The site uses short byte-range streams so large files stay within Netlify's per-response limit. There is no public Drive link in the app.
 
