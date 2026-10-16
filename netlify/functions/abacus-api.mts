@@ -210,7 +210,8 @@ function videoOfferDetails(data: any) {
 
 function lessonFolder() {
   const folder = Netlify.env.get('DRIVE_LESSON_VIDEO_FOLDER_ID')?.trim();
-  return folder && folder !== Netlify.env.get('DRIVE_MEDIA_FOLDER_ID') && /^[\w-]+$/.test(folder)
+  const publicFolder = Netlify.env.get('DRIVE_MEDIA_FOLDER_ID') || '1hZgz79zBUWy6wfPGtEylaGBapNl-RrLZ';
+  return folder && folder !== publicFolder && /^[\w-]+$/.test(folder)
     ? folder : null;
 }
 

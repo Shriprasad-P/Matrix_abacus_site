@@ -2,19 +2,26 @@ import { getStore } from '@netlify/blobs';
 import { driveToken } from './drive-auth.mts';
 export { driveToken } from './drive-auth.mts';
 
+// The institute-owned Drive folder contains only material approved for public display.
+const defaultMediaFolderId = '1hZgz79zBUWy6wfPGtEylaGBapNl-RrLZ';
+
+function mediaFolderId() {
+  return Netlify.env.get('DRIVE_MEDIA_FOLDER_ID') || defaultMediaFolderId;
+}
+
 export function mediaStore() {
   // Only the production-only scheduled function writes to this site-wide store.
   return getStore('website-media', { consistency: 'strong' });
 }
 
 export function configured() {
-  return Boolean(Netlify.env.get('DRIVE_MEDIA_FOLDER_ID') &&
+  return Boolean(mediaFolderId() &&
     (Netlify.env.get('GOOGLE_SERVICE_ACCOUNT_JSON') || Netlify.env.get('FIREBASE_SERVICE_ACCOUNT_JSON')));
 }
 
 export async function listDriveFiles() {
   const token = await driveToken();
-  const folder = Netlify.env.get('DRIVE_MEDIA_FOLDER_ID');
+  const folder = mediaFolderId();
   const files: any[] = [];
   let pageToken = '';
   do {

@@ -6,11 +6,9 @@ The website runs on Netlify. Its gallery and public PDF downloads can be managed
 
 ## One-time setup
 
-1. Create a Google Drive folder **only for public website images and PDFs**. Do not put private student or payment records in it.
+1. Upload only public website images and PDFs to the institute's [Public Website Media folder](https://drive.google.com/drive/u/3/folders/1hZgz79zBUWy6wfPGtEylaGBapNl-RrLZ). Do not put private student or payment records in it. The site includes this folder ID as its default; `DRIVE_MEDIA_FOLDER_ID` can override it if the folder moves.
 2. In Google Cloud, enable the Drive API. Share the folder with the service account email as **Viewer**. The existing Firebase Admin service account can be reused for this if it is already configured on Netlify; otherwise create a dedicated Google service account with a JSON key.
-3. In the Netlify site's environment variables, set:
-   - `DRIVE_MEDIA_FOLDER_ID`: the ID between `/folders/` and the next `?` in the folder URL.
-   - `GOOGLE_SERVICE_ACCOUNT_JSON`: optional when `FIREBASE_SERVICE_ACCOUNT_JSON` is already configured. If using a dedicated Google service account, set this to its complete JSON key. Keep keys secret; never put them in Git or Drive.
+3. Keep the existing `FIREBASE_SERVICE_ACCOUNT_JSON` available to Netlify Functions. `GOOGLE_SERVICE_ACCOUNT_JSON` may optionally provide a dedicated Drive service account instead. Keep keys secret; never put them in Git or Drive.
 4. Publish the site, then wait for the daily sync at **09:30 India time** (04:00 UTC). The first sync publishes up to six images. Netlify Functions and Blobs must be enabled on the site.
 
 Until these settings are present, the existing images and PDFs continue to appear. The full gallery uses the same published image list as the homepage.
