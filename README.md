@@ -9,18 +9,18 @@ The website runs on Netlify. Its gallery and public PDF downloads can be managed
 1. Upload only public website images and PDFs to the institute's [Public Website Media folder](https://drive.google.com/drive/u/3/folders/1hZgz79zBUWy6wfPGtEylaGBapNl-RrLZ). Do not put private student or payment records in it. The site includes this folder ID as its default; `DRIVE_MEDIA_FOLDER_ID` can override it if the folder moves.
 2. In Google Cloud, enable the Drive API. Share the folder with the service account email as **Viewer**. The existing Firebase Admin service account can be reused for this if it is already configured on Netlify; otherwise create a dedicated Google service account with a JSON key.
 3. Keep the existing `FIREBASE_SERVICE_ACCOUNT_JSON` available to Netlify Functions. `GOOGLE_SERVICE_ACCOUNT_JSON` may optionally provide a dedicated Drive service account instead. Keep keys secret; never put them in Git or Drive.
-4. Publish the site, then wait for the daily sync at **09:30 India time** (04:00 UTC). The first sync publishes up to six images. Netlify Functions and Blobs must be enabled on the site.
+4. Publish the site, then wait for the daily sync at **09:30 India time** (04:00 UTC). Each sync selects the next six images for that day. Netlify Functions and Blobs must be enabled on the site.
 
 Until these settings are present, the existing images and PDFs continue to appear. The full gallery uses the same published image list as the homepage.
 
 ## Owner workflow
 
 - Upload JPG, PNG, WebP, GIF or AVIF images, or PDF documents, directly into that folder. Files must be 20 MB or smaller.
-- Images enter a queue in upload order. The site publishes **up to six new images every seven days**. With 500 images, the first six show after the first daily sync; the rest stay queued and release six at a time each week. Removing an image from Drive removes it from the site on the next daily sync.
+- Images enter a queue in upload order. The site **replaces the six visible images every day** with the next six. With 500 images, the first six show after the first daily sync and a different six show the next day. After every image has appeared, the rotation starts again from the beginning. If fewer than six images exist, the site shows what is available; those images cannot change until more are uploaded. Removing an image from Drive removes it from the site on the next daily sync.
 - PDFs appear in **Downloads** on the next daily sync. Existing worksheet and results links are also replaced when an uploaded PDF has the matching name, such as `level1.pdf`, `prodigy.pdf`, or `student-results.pdf`.
 - Upload only material approved for public display. Anyone can view or download published files on the website.
 
-The queue state lives in Netlify Blobs, so deployments do not reset it. If the folder ID changes, images from the old folder are removed at the next sync. Images from the new folder then follow the existing weekly release schedule.
+The queue state lives in Netlify Blobs, so deployments do not reset it. If the folder ID changes, images from the old folder are removed at the next sync. Images from the new folder then follow the daily rotation.
 
 ## Firebase API setup
 
