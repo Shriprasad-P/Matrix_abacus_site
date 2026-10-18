@@ -48,6 +48,11 @@ test('admin and student flows keep scoring, seats, and payments on the server', 
     assert.equal((await call('/api/challenges/' + challenge.data.id + '/answer', 'POST',
       { answer: challenge.data.target }, student, true)).status, 409);
   }
+  const recent = await call('/api/sessions', 'GET', null, admin);
+  assert.equal(recent.data.length, 5);
+  assert.equal((await call('/api/sessions?before=' + recent.data.at(-1).id,
+    'GET', null, admin)).data.length, 0);
+  assert.equal((await call('/api/sessions?before=invalid', 'GET', null, admin)).status, 400);
   const me = await call('/api/me', 'GET', null, student, true);
   assert.equal(me.data.student.level, 'Level 1');
   const fee = await call('/api/fees', 'POST', {
@@ -64,6 +69,9 @@ test('admin and student flows keep scoring, seats, and payments on the server', 
   const paid = await call('/api/fees/' + payment.data.id + '/review', 'PUT',
     { status: 'paid', bank_verified: true }, admin);
   assert.equal(paid.data.status, 'paid');
+  const adminFees = await call('/api/fees', 'GET', null, admin);
+  assert.equal(adminFees.data.cycles.find(cycle => cycle.id === fee.data.id).active, 1);
+  assert.equal(adminFees.data.payments.find(row => row.student_id === studentId).status, 'paid');
   const videos = await call('/api/videos', 'GET', null, student, true);
   assert.equal(videos.data.videos.length, 0);
   assert.equal(videos.data.configured, false);
@@ -117,6 +125,17 @@ test('admin and student flows keep scoring, seats, and payments on the server', 
     { phone: '8888888888', password: '8888888888' }, null, true);
   assert.equal((await call('/api/schedule/my', 'PUT',
     { slot_ids: ['1|16:00|17:00', '3|16:00|17:00'] }, secondLogin.data.token, true)).status, 409);
+  await call('/api/schedule/settings', 'PUT', { enabled: true, slots: [slots[1],
+    { day: 5, start: '16:00', end: '17:00', capacity: 1 }] }, admin);
+  assert.equal((await call('/api/schedule', 'GET', null, admin)).data.students
+    .find(item => item.student_id === studentId).selection.length, 2);
+  assert.equal((await call('/api/schedule/students/' + studentId + '/clear', 'POST', null, admin)).status, 200);
+  const cleared = await call('/api/schedule', 'GET', null, student, true);
+  assert.equal(cleared.data.needs_rescheduling, true);
+  assert.equal(cleared.data.selection.length, 0);
+  const rescheduled = await call('/api/schedule/my', 'PUT',
+    { slot_ids: ['3|16:00|17:00', '5|16:00|17:00'] }, student, true);
+  assert.equal(rescheduled.data.selection.length, 2);
   const worksheet = await call('/api/worksheets', 'POST',
     { title: 'Level one pilot', level: 'Level 1', questions: '100 + 5' }, admin);
   const attempt = await call('/api/worksheets/' + worksheet.data.id + '/submit', 'POST',
@@ -125,6 +144,13 @@ test('admin and student flows keep scoring, seats, and payments on the server', 
   const review = await call('/api/worksheets/' + attempt.data.id + '/review', 'PUT',
     { progress: 25, note: 'Good' }, admin);
   assert.equal(review.data.progress, 25);
+  const lowerReview = await call('/api/worksheets/' + attempt.data.id + '/review', 'PUT',
+    { progress: 0, note: 'Keep practicing' }, admin);
+  assert.equal(lowerReview.data.progress, 25);
+  const adminWorksheets = await call('/api/worksheets', 'GET', null, admin);
+  assert.equal(adminWorksheets.data.attempts.find(item => item.id === attempt.data.id).attempt_number, 1);
+  assert.equal((await call('/api/worksheets', 'GET', null, student, true)).data.attempts
+    .find(item => item.id === attempt.data.id).reviewed_progress, 25);
   const sibling = await call('/api/students', 'POST', {
     name: 'Sibling Pilot', age: 7, guardian: 'Pilot Guardian', phone: '9999999999', level: 'Beginner'
   }, admin);
@@ -150,4 +176,29 @@ test('admin and student flows keep scoring, seats, and payments on the server', 
   assert.equal(updatedLogin.status, 200);
   await call('/api/students/' + studentId + '/archive', 'POST', { archived: true }, admin);
   assert.equal((await call('/api/me', 'GET', null, updatedLogin.data.token, true)).status, 401);
+  const batch = getFirestore().batch();
+  const seed = Date.now() * 1000 + 10000;
+  for (let index = 0; index < 101; index++) {
+    const sessionId = seed + index;
+    batch.create(getFirestore().collection('abacus_practice_sessions').doc(String(sessionId)), {
+      id: sessionId, student_id: studentId, target: 1, answer: 1, correct: true,
+      level_at_attempt: 'Beginner', reviewed_progress: 25
+    });
+    batch.create(getFirestore().collection('abacus_worksheet_attempts').doc(String(sessionId)), {
+      id: sessionId, worksheet_id: worksheet.data.id, student_id: studentId,
+      answers: [105], score: 1, total: 1, level_at_attempt: 'Level 1',
+      reviewed_progress: 25, attempt_number: 1
+    });
+  }
+  await batch.commit();
+  const firstPage = await call('/api/sessions', 'GET', null, admin);
+  assert.equal(firstPage.data.length, 100);
+  const olderPage = await call('/api/sessions?before=' + firstPage.data.at(-1).id,
+    'GET', null, admin);
+  assert.equal(olderPage.data.length, 6);
+  const worksheetPage = await call('/api/worksheets', 'GET', null, admin);
+  assert.equal(worksheetPage.data.attempts.length, 100);
+  assert.equal(worksheetPage.data.has_more_attempts, true);
+  assert.equal((await call('/api/worksheets?before=' + worksheetPage.data.next_cursor,
+    'GET', null, admin)).data.attempts.length, 2);
 });

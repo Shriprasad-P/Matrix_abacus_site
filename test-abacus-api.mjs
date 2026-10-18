@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { feeDetails, worksheetDetails, scheduleDetails, videoEntitlement, videoOfferDetails,
-  addCalendarMonths, videoRange } from './netlify/functions/abacus-api.mts';
+  addCalendarMonths, videoRange, videoProgressStep, practiceBand } from './netlify/functions/abacus-api.mts';
+
+test('practice targets increase within a level as the timed streak grows', () => {
+  assert.deepEqual(practiceBand('Beginner', 0), { tier: 1, range: [1, 9] });
+  assert.deepEqual(practiceBand('Beginner', 2), { tier: 2, range: [10, 49] });
+  assert.deepEqual(practiceBand('Beginner', 4), { tier: 3, range: [50, 99] });
+  assert.deepEqual(practiceBand('Level 3', 4), { tier: 3, range: [8000, 9999] });
+});
 
 test('fee and worksheet input cannot create invalid records', () => {
   assert.equal(feeDetails({ label: 'October', amount: '0.01', upi_id: 'school@upi', due_date: '2026-10-31' }).amount_paise, 1);
@@ -46,4 +53,18 @@ test('video playback serves one bounded byte range at a time', () => {
   assert.deepEqual(videoRange('bytes=1048576-1048577', size), { start: 1048576, end: 1048577 });
   assert.throws(() => videoRange('bytes=0-1,4-5', size));
   assert.throws(() => videoRange(`bytes=${size}-`, size));
+});
+
+test('lesson completion credit rejects jumps and replayed sections', () => {
+  const start = Date.parse('2026-10-17T00:00:00Z');
+  const play = { duration_ms: 60000, started_at: start, last_reported_at: start,
+    last_position_ms: 0, credited_position_ms: 0, watched_ms: 0 };
+  assert.throws(() => videoProgressStep(play, 40000, start + 5000));
+  assert.throws(() => videoProgressStep(play, 55000, start + 60000));
+  const first = { ...play, ...videoProgressStep(play, 10000, start + 10000) };
+  assert.equal(first.watched_ms, 10000);
+  const rewind = { ...first, ...videoProgressStep(first, 2000, start + 12000) };
+  const replay = videoProgressStep(rewind, 10000, start + 20000);
+  assert.equal(replay.watched_ms, 10000);
+  assert.equal(videoProgressStep(first, 20000, start + 20000).watched_ms, 20000);
 });
