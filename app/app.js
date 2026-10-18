@@ -12,6 +12,7 @@ function apiFetch(path, options={}) {
 const navButtons = [...document.querySelectorAll('.nav')];
 let students = [];
 let sessions = [];
+let sessionHasMore = false;
 let reviewingSession = null;
 let feeData = {cycles:[], payments:[]};
 let videoCourses = {offers:[], orders:[], courses:[]};
@@ -23,6 +24,8 @@ let certificateBlobUrl = null;
 let reviewingPayment = null;
 let submittingFeeCycle = null;
 let worksheetData = {worksheets:[], attempts:[]};
+let worksheetHasMore = false;
+let worksheetNextCursor = null;
 let scheduleData = {enabled:false, slots:[], selection:[]};
 let solvingWorksheet = null;
 let reviewingWorksheet = null;
@@ -188,6 +191,23 @@ function renderSchedule() {
       if (student.selection.some(slot => !available.has(classSlotId(slot)))) {
         const warning = document.createElement('small'); warning.textContent = 'Schedule needs updating: a class time is no longer offered.';
         details.append(warning);
+        const clear = document.createElement('button'); clear.type = 'button';
+        clear.textContent = 'Ask student to choose again';
+        clear.onclick = async () => {
+          clear.disabled = true;
+          try {
+            const response = await apiFetch('/api/schedule/students/' + student.student_id + '/clear',
+              {method:'POST'});
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Could not clear old class choices.');
+            await loadSchedule();
+            $('schedule-settings-message').textContent = student.name + ' can now choose two current class times.';
+          } catch (error) { $('schedule-settings-message').textContent = error.message; clear.disabled = false; }
+        };
+        details.append(clear);
+      } else if (student.needs_rescheduling) {
+        const warning = document.createElement('small'); warning.textContent = 'Waiting for this student to choose two new class times.';
+        details.append(warning);
       }
       card.append(details);
       $('admin-schedule-list').append(card);
@@ -198,8 +218,10 @@ function renderSchedule() {
   const selected = scheduleData.selection || [];
   const current = selected.length ? selected.map(classSlotLabel).join(' · ') : 'No classes chosen yet.';
   const needsUpdate = selected.some(slot => !available.has(classSlotId(slot)));
-  $('schedule-home-summary').textContent = current + (needsUpdate ? ' Please choose from the current class times.' : '');
-  $('student-schedule-current').textContent = current + (needsUpdate ? ' A class time is no longer offered; please update your choices.' : '');
+  const rescheduleMessage = needsUpdate || scheduleData.needs_rescheduling ?
+    ' Please choose two current class times.' : '';
+  $('schedule-home-summary').textContent = current + rescheduleMessage;
+  $('student-schedule-current').textContent = current + rescheduleMessage;
   $('student-schedule-options').replaceChildren();
   if (!scheduleData.enabled) {
     $('student-schedule-options').textContent = 'Your instructor has not opened class scheduling yet.';
@@ -375,6 +397,7 @@ async function loadSessions() {
     const response = await apiFetch('/api/sessions');
     if (!response.ok) throw new Error('Could not load practice sessions.');
     sessions = await response.json();
+    sessionHasMore = portalRole === 'admin' && sessions.length === 100;
     if (portalRole === 'admin') { renderSessions(); renderDashboardCounts(); } else renderStudentSessions();
   } catch (error) {
     const empty = $(portalRole === 'student' ? 'my-session-empty' : 'session-empty');
@@ -444,8 +467,32 @@ async function loadVideos() {
           player.src = new URL(result.url, mobileApp ? apiOrigin : location.origin).href;
           player.setAttribute('aria-label', item.title);
           player.onerror = () => { message.textContent = 'Video playback stopped. Open the lesson again to renew access.'; };
+          let lastReported = 0;
+          let progressRequest = Promise.resolve();
+          const reportProgress = position => {
+            progressRequest = progressRequest.catch(() => {}).then(async () => {
+              const response = await apiFetch('/api/videos/' + encodeURIComponent(item.id) + '/progress',
+                {method:'POST',headers:{'Content-Type':'application/json'},
+                  body:JSON.stringify({ticket:result.ticket,position_ms:position})});
+              const data = await response.json();
+              if (!response.ok) throw new Error(data.error || 'Could not save viewing progress.');
+              lastReported = position;
+            });
+            return progressRequest;
+          };
+          player.ontimeupdate = () => {
+            const position = Math.floor(player.currentTime * 1000);
+            if (position - lastReported >= 4000 && progressRequestSettled) {
+              progressRequestSettled = false;
+              reportProgress(position).catch(error => { message.textContent = error.message; })
+                .finally(() => { progressRequestSettled = true; });
+            }
+          };
+          let progressRequestSettled = true;
           player.onended = async () => {
             try {
+              await progressRequest;
+              await reportProgress(Math.floor(player.currentTime * 1000));
               const completed = await apiFetch('/api/videos/' + encodeURIComponent(item.id) + '/complete',
                 {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket:result.ticket})});
               const resultData = await completed.json();
@@ -664,7 +711,8 @@ $('final-test-form').onsubmit = event => {
 };
 function renderSessions() {
   const list = $('session-list'); list.replaceChildren();
-  $('session-count').textContent = sessions.length + (sessions.length === 1 ? ' session' : ' sessions');
+  $('session-count').textContent = sessions.length + (sessionHasMore ? '+ recent' : '') +
+    (sessions.length === 1 ? ' session' : ' sessions');
   $('session-empty').classList.toggle('hidden', sessions.length > 0);
   for (const session of sessions) {
     const card = document.createElement('article'); card.className = 'session-card';
@@ -682,6 +730,20 @@ function renderSessions() {
     button.disabled = stale;
     button.onclick = () => openReview(session);
     card.append(main,button); list.append(card);
+  }
+  if (sessionHasMore) {
+    const more = document.createElement('button'); more.type = 'button'; more.className = 'secondary';
+    more.textContent = 'Load older sessions';
+    more.onclick = async () => {
+      more.disabled = true;
+      try {
+        const response = await apiFetch('/api/sessions?before=' + sessions.at(-1).id);
+        const older = await response.json();
+        if (!response.ok) throw new Error(older.error || 'Could not load older sessions.');
+        sessions.push(...older); sessionHasMore = older.length === 100; renderSessions();
+      } catch (error) { more.textContent = error.message; more.disabled = false; }
+    };
+    list.append(more);
   }
 }
 function renderDashboardCounts() {
@@ -879,6 +941,8 @@ async function loadWorksheets() {
     const response = await apiFetch('/api/worksheets');
     if (!response.ok) throw new Error('Could not load worksheets.');
     worksheetData = await response.json();
+    worksheetHasMore = portalRole === 'admin' && worksheetData.has_more_attempts;
+    worksheetNextCursor = worksheetData.next_cursor;
     if (portalRole === 'admin') { renderAdminWorksheets(); renderDashboardCounts(); }
     else { renderStudentWorksheets(); renderStudentNext(); }
   } catch (error) {
@@ -896,7 +960,8 @@ function worksheetCard(title, detail, status, action, onClick) {
 function renderAdminWorksheets() {
   const list = $('admin-worksheet-list'), results = $('admin-worksheet-results');
   list.replaceChildren(); results.replaceChildren();
-  $('worksheet-review-count').textContent = worksheetData.attempts.length + (worksheetData.attempts.length === 1 ? ' attempt' : ' attempts');
+  $('worksheet-review-count').textContent = worksheetData.attempts.length +
+    (worksheetHasMore ? '+ recent' : '') + (worksheetData.attempts.length === 1 ? ' attempt' : ' attempts');
   for (const worksheet of worksheetData.worksheets) list.append(worksheetCard(worksheet.title, worksheet.level + ' · ' + worksheet.questions.length + ' questions', 'Assigned', '', null));
   if (!worksheetData.worksheets.length) addText(list,'p','No worksheets yet. Create one to get started.');
   for (const attempt of worksheetData.attempts) {
@@ -907,6 +972,23 @@ function renderAdminWorksheets() {
     results.append(card);
   }
   if (!worksheetData.attempts.length) addText(results,'p','No student submissions yet.');
+  if (worksheetHasMore && worksheetNextCursor) {
+    const more = addText(results, 'button', 'Load older submissions', 'secondary');
+    more.type = 'button';
+    more.onclick = async () => {
+      more.disabled = true;
+      try {
+        const response = await apiFetch('/api/worksheets?before=' + worksheetNextCursor);
+        const older = await response.json();
+        if (!response.ok) throw new Error(older.error || 'Could not load older submissions.');
+        const byId = new Map([...worksheetData.attempts, ...older.attempts].map(item => [item.id, item]));
+        worksheetData.attempts = [...byId.values()].sort((a,b) => b.id - a.id);
+        worksheetHasMore = older.has_more_attempts;
+        worksheetNextCursor = older.next_cursor;
+        renderAdminWorksheets(); renderDashboardCounts();
+      } catch (error) { more.textContent = error.message; more.disabled = false; }
+    };
+  }
 }
 function renderStudentWorksheets() {
   const list = $('student-worksheet-list'), results = $('profile-worksheet-results');
@@ -1092,7 +1174,7 @@ $('new-challenge').onclick = async () => {
     activeChallenge = result;
     upper.fill(false); lower.fill(0); renderAbacus();
     const [, maximum] = challengeRange[result.level];
-    $('challenge-level').textContent = result.level + ' · ' + (maximum < 100 ? 'up to 2 digits' : maximum < 1000 ? '3 digits' : '4 digits') + ' practice';
+    $('challenge-level').textContent = result.level + ' · Difficulty ' + result.difficulty_tier + ' of 3 · ' + (maximum < 100 ? 'up to 2 digits' : maximum < 1000 ? '3 digits' : '4 digits') + ' practice';
     $('challenge-hint').textContent = maximum < 100 ? 'Use the tens and ones rods.' : maximum < 1000 ? 'Build hundreds, tens, then ones.' : 'Build thousands, hundreds, tens, then ones.';
     $('challenge-mastery').textContent = 'Timed mastery: ' + result.mastery_streak + ' / ' + result.mastery_required;
     $('target').textContent = String(result.target);

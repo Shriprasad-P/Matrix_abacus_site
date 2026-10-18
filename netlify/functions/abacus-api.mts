@@ -9,6 +9,17 @@ const challengeRules: Record<string, [number, number, number]> = {
   Beginner: [1, 99, 60], 'Level 1': [100, 999, 50],
   'Level 2': [1000, 4999, 40], 'Level 3': [5000, 9999, 30]
 };
+const challengeBands: Record<string, [number, number][]> = {
+  Beginner: [[1, 9], [10, 49], [50, 99]],
+  'Level 1': [[100, 299], [300, 699], [700, 999]],
+  'Level 2': [[1000, 1999], [2000, 3499], [3500, 4999]],
+  'Level 3': [[5000, 6499], [6500, 7999], [8000, 9999]]
+};
+function practiceBand(level: string, streak: number) {
+  required(Boolean(challengeBands[level]), 'Unknown learning level', 409);
+  const tier = Math.min(2, Math.floor(Math.max(0, streak) / 2));
+  return { tier: tier + 1, range: challengeBands[level][tier] };
+}
 const checkpoints = [0, 25, 50, 75, 100];
 const now = () => new Date().toISOString();
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -283,6 +294,20 @@ function videoRange(requested: string | null, size: number) {
   return { start, end: Math.min(requestedEnd, start + videoChunkBytes - 1, size - 1) };
 }
 
+function videoProgressStep(play: any, positionMs: number, reportedAt: number) {
+  required(Number.isSafeInteger(positionMs) && positionMs >= 0 &&
+    positionMs <= play.duration_ms + 1000, 'Invalid video position.');
+  const previous = Number(play.last_position_ms) || 0;
+  const elapsed = Math.max(0, reportedAt - (Number(play.last_reported_at) || play.started_at));
+  required(positionMs <= previous || (positionMs - previous <= elapsed + 2000 &&
+    positionMs - previous <= 12000),
+    'Video progress moved too quickly', 409);
+  const credited = Number(play.credited_position_ms) || 0;
+  return { last_position_ms: positionMs, last_reported_at: reportedAt,
+    credited_position_ms: Math.max(credited, positionMs),
+    watched_ms: (Number(play.watched_ms) || 0) + Math.max(0, positionMs - Math.max(previous, credited)) };
+}
+
 async function streamLessonVideo(req: Request, fileId: string, origin: string) {
   const ticket = new URL(req.url).searchParams.get('ticket') || '';
   required(/^[\w-]{40,}$/.test(ticket), 'Video sign-in required', 401);
@@ -382,7 +407,7 @@ function scheduleDetails(data: any) {
     a.day - b.day || a.start.localeCompare(b.start) || a.end.localeCompare(b.end)) };
 }
 
-async function getData(path: string, session: any) {
+async function getData(path: string, session: any, search = new URLSearchParams()) {
   requireRole(session);
   if (path === '/api/me') {
     if (session.role === 'admin') return { role: 'admin' };
@@ -398,10 +423,20 @@ async function getData(path: string, session: any) {
       mastery_streak, phone_digits, ...student }) => student);
   }
   if (path === '/api/sessions') {
-    const students = await list('abacus_students');
-    return order((await list('abacus_practice_sessions')).filter(row =>
-      session.role === 'admin' || row.student_id === session.student_id).map(row => {
-      const student = students.find(item => item.id === row.student_id);
+    const before = search.get('before');
+    required(!before || (session.role === 'admin' && /^\d+$/.test(before) &&
+      Number.isSafeInteger(Number(before))), 'Invalid history cursor');
+    const adminQuery = col('abacus_practice_sessions');
+    const rows = session.role === 'admin' ?
+      (await (before ? adminQuery.where('id', '<', Number(before)) : adminQuery)
+        .orderBy('id', 'desc').limit(100).get()).docs.map(doc => doc.data()) :
+      (await col('abacus_practice_sessions').where('student_id', '==', session.student_id).get())
+        .docs.map(doc => doc.data());
+    const students = session.role === 'admin' ? await list('abacus_students') :
+      [await one('abacus_students', session.student_id)];
+    const byId = new Map(students.filter(Boolean).map(student => [student.id, student]));
+    return order(rows.map(row => {
+      const student = byId.get(row.student_id);
       return { ...row, student_name: student?.name || '', current_level: student?.level || '' };
     }));
   }
@@ -418,28 +453,50 @@ async function getData(path: string, session: any) {
       students: students.sort((a, b) => a.name.localeCompare(b.name)).map(student => {
         const choice = selections.find(item => item.student_id === student.id);
         return { student_id: student.id, name: student.name,
-          selection: choice?.selection || [], updated_at: choice?.updated_at || null };
+          selection: choice?.selection || [], needs_rescheduling: Boolean(choice?.needs_rescheduling),
+          updated_at: choice?.updated_at || null };
       })
     };
     const choice = selections.find(item => item.student_id === session.student_id);
-    return { enabled: settings.enabled, slots, selection: choice?.selection || [], updated_at: choice?.updated_at || null };
+    return { enabled: settings.enabled, slots, selection: choice?.selection || [],
+      needs_rescheduling: Boolean(choice?.needs_rescheduling), updated_at: choice?.updated_at || null };
   }
   if (path === '/api/fees') {
-    const allCycles = order(await list('abacus_fee_cycles'));
-    const allPayments = order(await list('abacus_fee_payments'));
     if (session.role === 'admin') {
-      const students = await list('abacus_students');
-      return { cycles: allCycles, history: [], payments: allCycles.flatMap(cycle =>
-        students.filter(student => cycle.id >= student.first_fee_cycle_id).map(student => {
-          const payment = allPayments.find(item => item.cycle_id === cycle.id && item.student_id === student.id);
-          return { cycle_id: cycle.id, student_id: student.id, student_name: student.name,
-            archived: student.archived ? 1 : 0, payment_id: payment?.id || null,
-            reference: payment?.reference || null, status: payment?.status || null,
-            submitted_at: payment?.submitted_at || null, reviewed_at: payment?.reviewed_at || null,
-            admin_note: payment?.admin_note || null };
-        })) };
+      const [settings, students, pendingSnap] = await Promise.all([
+        one('abacus_settings', 'fee'), list('abacus_students'),
+        col('abacus_fee_payments').where('status', '==', 'pending').get()
+      ]);
+      const current = settings?.current_id ? await one('abacus_fee_cycles', settings.current_id) : null;
+      const currentPayments = current ?
+        (await col('abacus_fee_payments').where('cycle_id', '==', current.id).get())
+          .docs.map(doc => doc.data()) : [];
+      const pending = pendingSnap.docs.map(doc => doc.data());
+      const byStudent = new Map(students.map(student => [student.id, student]));
+      const pendingCycles = [...new Set(pending.filter(payment => payment.cycle_id !== current?.id)
+        .map(payment => payment.cycle_id))];
+      const olderCycles = (await Promise.all(pendingCycles.map(cycleId => one('abacus_fee_cycles', cycleId))))
+        .filter(Boolean);
+      const row = (cycleId: number, student: any, payment?: any) => ({
+        cycle_id: cycleId, student_id: student.id, student_name: student.name,
+        archived: student.archived ? 1 : 0, payment_id: payment?.id || null,
+        reference: payment?.reference || null, status: payment?.status || null,
+        submitted_at: payment?.submitted_at || null, reviewed_at: payment?.reviewed_at || null,
+        admin_note: payment?.admin_note || null
+      });
+      const currentByStudent = new Map(currentPayments.map(payment => [payment.student_id, payment]));
+      return { cycles: [current, ...olderCycles].filter(Boolean), history: [], payments: [
+        ...(current ? students.filter(student => current.id >= student.first_fee_cycle_id)
+          .map(student => row(current.id, student, currentByStudent.get(student.id))) : []),
+        ...pending.filter(payment => payment.cycle_id !== current?.id)
+          .filter(payment => byStudent.has(payment.student_id))
+          .map(payment => row(payment.cycle_id, byStudent.get(payment.student_id), payment))
+      ] };
     }
     const student = await one('abacus_students', session.student_id);
+    const allCycles = order(await list('abacus_fee_cycles'));
+    const allPayments = order((await col('abacus_fee_payments')
+      .where('student_id', '==', session.student_id).get()).docs.map(doc => doc.data()));
     const cycles = allCycles.filter(cycle => cycle.id >= student!.first_fee_cycle_id);
     const mine = allPayments.filter(payment => payment.student_id === session.student_id);
     return { cycles, payments: cycles.map(cycle => {
@@ -493,43 +550,120 @@ async function getData(path: string, session: any) {
     const visible = session.role === 'admin' ? all : all.filter(item =>
       item.level === 'All levels' || item.level === student?.level);
     const students = session.role === 'admin' ? await list('abacus_students') : [];
-    const attempts = order((await list('abacus_worksheet_attempts')).filter(item =>
-      session.role === 'admin' || item.student_id === session.student_id));
+    const before = search.get('before');
+    required(!before || (session.role === 'admin' && /^\d+$/.test(before) &&
+      Number.isSafeInteger(Number(before))), 'Invalid worksheet cursor');
+    const attemptsCollection = col('abacus_worksheet_attempts');
+    const page = session.role === 'admin' ?
+      (await (before ? attemptsCollection.where('id', '<', Number(before)) : attemptsCollection)
+        .orderBy('id', 'desc').limit(100).get()).docs.map(doc => doc.data()) : [];
+    const pending = session.role === 'admin' && !before ?
+      (await attemptsCollection.where('reviewed_progress', '==', null).get())
+        .docs.map(doc => doc.data()) : [];
+    const attempts = order(session.role === 'admin' ?
+      [...new Map([...page, ...pending].map(item => [item.id, item])).values()] :
+      (await col('abacus_worksheet_attempts').where('student_id', '==', session.student_id).get())
+        .docs.map(doc => doc.data()));
+    const worksheetsById = new Map(all.map(item => [item.id, item]));
+    const studentsById = new Map(students.map(item => [item.id, item]));
+    const legacyByStudent = new Map<number, Promise<any[]>>();
     return { worksheets: visible.map(({ questions, ...item }) => ({
       ...item, questions: questions.map((question: any) => ({ prompt: question.prompt }))
-    })), attempts: attempts.map(attempt => {
-      const worksheet = all.find(item => item.id === attempt.worksheet_id);
+    })), has_more_attempts: session.role === 'admin' && page.length === 100,
+    next_cursor: session.role === 'admin' && page.length === 100 ? page.at(-1).id : null,
+    attempts: await Promise.all(attempts.map(async attempt => {
+      const worksheet = worksheetsById.get(attempt.worksheet_id);
       const answers = attempt.answers;
       const { answers: hidden, ...row } = attempt;
-      return { ...row, title: worksheet?.title || '', current_level: students.find(item =>
-        item.id === attempt.student_id)?.level, student_name: students.find(item =>
-        item.id === attempt.student_id)?.name,
-        attempt_number: attempts.filter(item => item.student_id === attempt.student_id &&
-          item.worksheet_id === attempt.worksheet_id && item.id <= attempt.id).length,
+      if (session.role === 'admin' && !Number.isInteger(attempt.attempt_number) &&
+        !legacyByStudent.has(attempt.student_id))
+        legacyByStudent.set(attempt.student_id,
+          col('abacus_worksheet_attempts').where('student_id', '==', attempt.student_id).get()
+            .then(snapshot => snapshot.docs.map(doc => doc.data())));
+      const peers = session.role === 'admin' && !Number.isInteger(attempt.attempt_number) ?
+        await legacyByStudent.get(attempt.student_id) : attempts;
+      return { ...row, title: worksheet?.title || '',
+        current_level: studentsById.get(attempt.student_id)?.level,
+        student_name: studentsById.get(attempt.student_id)?.name,
+        attempt_number: attempt.attempt_number || peers!.filter(item =>
+          item.student_id === attempt.student_id && item.worksheet_id === attempt.worksheet_id &&
+          item.id <= attempt.id).length,
         correctness: worksheet?.questions.map((question: any, index: number) =>
           answers[index] === question.answer) || [],
         ...(session.role === 'admin' ? { answers } : {}) };
-    }) };
+    })) };
   }
   fail(404, 'Not found');
 }
 
 async function postData(path: string, req: Request, session: any): Promise<[any, number]> {
   requireRole(session);
+  const clearSchedule = path.match(/^\/api\/schedule\/students\/(\d+)\/clear$/);
+  if (clearSchedule) {
+    requireRole(session, 'admin');
+    const studentId = Number(clearSchedule[1]);
+    required(Number.isSafeInteger(studentId), 'Invalid student ID');
+    return [await database().runTransaction(async tx => {
+      const settings = (await tx.get(col('abacus_settings').doc('schedule'))).data();
+      const choiceRef = col('abacus_student_schedules').doc(String(studentId));
+      const choice = (await tx.get(choiceRef)).data();
+      required(Boolean(choice?.selection?.length), 'No class choices to clear', 409);
+      const available = new Set((settings?.slots || []).map(slotId));
+      required(choice!.selection.some((slot: any) => !available.has(slotId(slot))),
+        'This student’s class choices are still valid', 409);
+      const counts = await Promise.all(choice!.selection.map(async (slot: any) => {
+        const ref = col('abacus_slot_counts').doc(hash(slotId(slot)));
+        return { ref, count: (await tx.get(ref)).data()?.count || 0 };
+      }));
+      counts.forEach(({ref, count}) => tx.set(ref, {count: Math.max(0, count - 1)}));
+      tx.set(choiceRef, { student_id: studentId, selection: [], needs_rescheduling: true,
+        updated_at: now() });
+      return { needs_rescheduling: true };
+    }), 200];
+  }
   const videoMatch = path.match(/^\/api\/videos\/([\w-]+)\/play$/);
   if (videoMatch) {
     requireRole(session, 'student');
     const video = await driveVideo(videoMatch[1]);
+    required(video.duration_ms >= 30000, 'This lesson is still being prepared. Try again later.', 409);
     required(await studentCanWatch(session.student_id, video.level),
       'Purchase for this level is not active', 403);
     const token = randomBytes(32).toString('base64url');
     await col('abacus_video_tickets').doc(hash(token)).set({
       student_id: session.student_id, video_id: video.id, level: video.level, size: video.size,
       started_at: Date.now(), duration_ms: video.duration_ms,
+      last_position_ms: 0, credited_position_ms: 0, watched_ms: 0, last_reported_at: Date.now(),
       session_hash: hash(sessionToken(req)!), expires: Date.now() + 2 * 60 * 60 * 1000,
       expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000)
     });
     return [{ url: `/api/videos/${video.id}/stream?ticket=${token}`, ticket: token }, 200];
+  }
+  const progressMatch = path.match(/^\/api\/videos\/([\w-]+)\/progress$/);
+  if (progressMatch) {
+    requireRole(session, 'student');
+    const details = await input(req);
+    const ticket = String(details.ticket || '');
+    required(/^[\w-]{40,}$/.test(ticket), 'Video session required', 401);
+    const positionMs = details.position_ms;
+    const existing = await one('abacus_video_tickets', hash(ticket));
+    required(Boolean(existing && existing.video_id === progressMatch[1] &&
+      existing.student_id === session.student_id &&
+      existing.session_hash === hash(sessionToken(req)!) && existing.expires > Date.now()),
+    'Video session expired', 401);
+    required(await studentCanWatch(session.student_id, existing!.level),
+      'Active level purchase required', 403);
+    const result = await database().runTransaction(async tx => {
+      const ref = col('abacus_video_tickets').doc(hash(ticket));
+      const play = (await tx.get(ref)).data();
+      required(Boolean(play && play.video_id === progressMatch[1] &&
+        play.student_id === session.student_id &&
+        play.session_hash === hash(sessionToken(req)!) && play.expires > Date.now()),
+      'Video session expired', 401);
+      const update = videoProgressStep(play, positionMs, Date.now());
+      tx.update(ref, update);
+      return { watched_ms: update.watched_ms };
+    });
+    return [result, 200];
   }
   const completeMatch = path.match(/^\/api\/videos\/([\w-]+)\/complete$/);
   if (completeMatch) {
@@ -541,8 +675,9 @@ async function postData(path: string, req: Request, session: any): Promise<[any,
       play.session_hash === hash(sessionToken(req)!) && play.expires > Date.now()),
     'Video session expired', 401);
     required(await studentCanWatch(session.student_id, play!.level), 'Purchase for this level has expired', 403);
-    const minimum = play!.duration_ms > 0 ? Math.ceil(play!.duration_ms * 0.9) : 30000;
-    required(Date.now() - play!.started_at >= minimum, 'Finish watching the lesson before marking it complete', 409);
+    const minimum = Math.ceil(play!.duration_ms * 0.9);
+    required(play!.watched_ms >= minimum && play!.credited_position_ms >= minimum,
+      'Finish watching the lesson before marking it complete', 409);
     const completion = { id: `${session.student_id}_${completeMatch[1]}`, student_id: session.student_id,
       video_id: completeMatch[1], level: play!.level, completed_at: now() };
     await col('abacus_video_completions').doc(completion.id).set(completion);
@@ -688,7 +823,9 @@ async function postData(path: string, req: Request, session: any): Promise<[any,
       const snap = await tx.get(studentRef);
       const student = snap.data();
       required(Boolean(student && !student.archived), 'Student account is archived', 401);
-      const [minimum, maximum, duration] = challengeRules[student!.level];
+      const [, , duration] = challengeRules[student!.level];
+      const band = practiceBand(student!.level, student!.mastery_streak || 0);
+      const [minimum, maximum] = band.range;
       const started = Date.now();
       const challenge = { id: challengeId, student_id: session.student_id, target: randomInt(minimum, maximum + 1),
         level_at_start: student!.level, duration_seconds: duration, started_at: started,
@@ -696,6 +833,7 @@ async function postData(path: string, req: Request, session: any): Promise<[any,
       tx.create(col('abacus_challenges').doc(String(challengeId)), challenge);
       tx.update(studentRef, { active_challenge_id: challengeId });
       return { id: challengeId, target: challenge.target, level: student!.level,
+        difficulty_tier: band.tier,
         duration_seconds: duration, mastery_streak: student!.mastery_streak, mastery_required: 5 };
     });
     return [result, 201];
@@ -763,7 +901,7 @@ async function postData(path: string, req: Request, session: any): Promise<[any,
       tx.set(countRef, { count: count + 1 });
       tx.create(col('abacus_worksheet_attempts').doc(String(attemptId)), {
         id: attemptId, worksheet_id: itemId, student_id: session.student_id, answers, score,
-        total: worksheet!.questions.length, level_at_attempt: student!.level,
+        attempt_number: count + 1, total: worksheet!.questions.length, level_at_attempt: student!.level,
         reviewed_progress: null, admin_note: '', submitted_at: now(), reviewed_at: null
       });
       return { id: attemptId, score, total: worksheet!.questions.length, correctness };
@@ -902,7 +1040,8 @@ async function putData(path: string, req: Request, session: any): Promise<any> {
         if (prior !== next) tx.set(counts.get(key)!.ref, { count: Math.max(0, counts.get(key)!.count + next - prior) });
       }
       selected.sort((a, b) => a.day - b.day || a.start.localeCompare(b.start));
-      tx.set(choiceRef, { student_id: session.student_id, selection: selected, updated_at: now() });
+      tx.set(choiceRef, { student_id: session.student_id, selection: selected,
+        needs_rescheduling: false, updated_at: now() });
       return { selection: selected };
     });
   }
@@ -958,7 +1097,7 @@ async function putData(path: string, req: Request, session: any): Promise<any> {
     required(result!.level_at_attempt === student?.level,
       'This result belongs to an earlier or unverified level. Current progress was not changed.', 409);
     const actual = Math.max(student!.progress, progress);
-    tx.update(ref, { reviewed_progress: progress, admin_note: note, reviewed_at: now() });
+    tx.update(ref, { reviewed_progress: actual, admin_note: note, reviewed_at: now() });
     tx.update(studentRef, { progress: actual });
     return { student_id: result!.student_id, progress: actual, ...(kind === 'sessions' ? { session_id: itemId } : {}) };
   });
@@ -990,7 +1129,7 @@ export default async (req: Request, context: Context) => {
     const certificateMatch = path.match(/^\/api\/certificates\/([\w-]+)\.svg$/);
     if (req.method === 'GET' && certificateMatch)
       return await certificateResponse(req, certificateMatch[1], session, origin);
-    if (req.method === 'GET') return reply(await getData(path, session), 200, origin);
+    if (req.method === 'GET') return reply(await getData(path, session, new URL(req.url).searchParams), 200, origin);
     if (req.method === 'POST' && path === '/api/logout') {
       const cookie = req.headers.get('cookie')?.match(/(?:^|; )abacus_session=([^;]+)/)?.[1];
       const bearer = req.headers.get('authorization')?.match(/^Bearer (.+)$/)?.[1];
@@ -1014,4 +1153,4 @@ export default async (req: Request, context: Context) => {
 export const config: Config = { path: '/api/*', excludedPath: '/api/media/*' };
 
 export { feeDetails, worksheetDetails, scheduleDetails, videoEntitlement, videoOfferDetails,
-  addCalendarMonths, videoRange };
+  addCalendarMonths, videoRange, videoProgressStep, practiceBand };
